@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WGP#1 Jet Ski Challenge</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --brand: #f37021;
+      --brand-dark: #c95512;
+      --ink: #08263f;
+      --sky: #8fd9ff;
+      --panel: rgba(255,255,255,0.92);
+    }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(180deg, #a5e3ff 0%, #dff6ff 35%, #2a97df 36%, #0d5a91 100%);
+      min-height: 100vh;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .app {
+      width: 100%;
+      max-width: 1280px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 16px;
+      align-items: start;
+    }
+    .main-panel {
+      min-width: 0;
+    }
+    .hud {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .pill {
+      background: var(--panel);
+      border-radius: 999px;
+      padding: 10px 14px;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+      border: 2px solid rgba(8,38,63,0.08);
+      font-weight: 700;
+    }
+    .brand-pill {
+      background: linear-gradient(135deg, var(--brand), #ff8f48);
+      color: white;
+      border-color: transparent;
+    }
+    canvas {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 22px;
+      border: 3px solid rgba(255,255,255,0.75);
+      box-shadow: 0 24px 54px rgba(0,0,0,0.18);
+      background: linear-gradient(180deg, #88d8ff 0%, #d8f4ff 40%, #2497de 41%, #0c629b 100%);
+    }
+    .bottom-bar {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 12px;
+    }
+    .card {
+      background: var(--panel);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+      border: 2px solid rgba(8,38,63,0.06);
+    }
+    .card h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+      color: #06233b;
+    }
+    .controls-line {
+      line-height: 1.7;
+    }
+    .controls-line strong { color: #031b2f; }
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .event-box {
+      background: linear-gradient(180deg, rgba(243,112,33,0.98), rgba(201,85,18,0.98));
+      color: #fff;
+      border-radius: 22px;
+      padding: 18px;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.16);
+    }
+    .event-box h2 {
+      margin: 0 0 8px;
+      font-size: 24px;
+      line-height: 1.15;
+    }
+    .event-box p {
+      margin: 0;
+      line-height: 1.5;
+      opacity: 0.96;
+      font-size: 14px;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    label {
+      font-size: 14px;
+      font-weight: 700;
+    }
+    input {
+      border: 2px solid rgba(8,38,63,0.12);
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 16px;
+      outline: none;
+    }
+    input:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 4px rgba(243,112,33,0.12);
+    }
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.08s ease, opacity 0.2s ease;
+    }
+    button:hover { opacity: 0.95; }
+    button:active { transform: translateY(1px); }
+    .primary {
+      background: var(--brand);
+      color: white;
+    }
+    .secondary {
+      background: #eaf4fb;
+      color: var(--ink);
+    }
+    .muted {
+      font-size: 13px;
+      color: #4d6980;
+      line-height: 1.5;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 10px 8px;
+      border-bottom: 1px solid rgba(8,38,63,0.08);
+      text-align: left;
+    }
+    th { color: #36566f; font-size: 13px; }
+    .rank-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      background: #eef6fb;
+      font-weight: 700;
+    }
+    .highlight {
+      color: var(--brand-dark);
+      font-weight: 700;
+    }
+    .qr-box {
+      display: grid;
+      grid-template-columns: 88px 1fr;
+      gap: 12px;
+      align-items: center;
+    }
+    .qr {
+      width: 88px;
+      height: 88px;
+      border-radius: 14px;
+      background:
+        linear-gradient(90deg, #111 10px, transparent 10px) 0 0/22px 22px,
+        linear-gradient(#111 10px, transparent 10px) 0 0/22px 22px,
+        linear-gradient(90deg, transparent 12px, #111 12px, #111 20px, transparent 20px) 0 0/22px 22px,
+        linear-gradient(transparent 12px, #111 12px, #111 20px, transparent 20px) 0 0/22px 22px,
+        #fff;
+      border: 6px solid #fff;
+      box-shadow: inset 0 0 0 2px rgba(8,38,63,0.08);
+    }
+    .sponsor-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .tag {
+      background: #f4f8fb;
+      border: 1px solid rgba(8,38,63,0.08);
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #48677e;
+    }
+    @media (max-width: 1080px) {
+      .app { grid-template-columns: 1fr; }
+      .bottom-bar { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="main-panel">
+      <div class="hud">
+        <div class="group">
+          <div class="pill brand-pill">WGP#1 JET SKI CHALLENGE</div>
+          <div class="pill">ผู้เล่น: <span id="playerLabel">Guest</span></div>
+          <div class="pill">คะแนน: <span id="score">0</span></div>
+          <div class="pill">Combo: <span id="combo">x1</span></div>
+          <div class="pill">ความเร็ว: <span id="speed">1.0</span>x</div>
+        </div>
+        <div class="group">
+          <div class="pill" id="status">กรอกชื่อ แล้วกด Start</div>
+        </div>
+      </div>
+
+      <canvas id="game" width="960" height="460"></canvas>
+
+      <div class="bottom-bar">
+        <div class="card">
+          <h3>วิธีเล่น</h3>
+          <div class="controls-line">
+            <strong>Space / ↑</strong> = กระโดด &nbsp;&nbsp; <strong>← / →</strong> = เปลี่ยนเลน &nbsp;&nbsp; <strong>R</strong> = เริ่มใหม่<br>
+            ผ่านสิ่งกีดขวางต่อเนื่องเพื่อสะสม <strong>Combo</strong> และเก็บ <strong>Boost Ring</strong> เพื่อพุ่งความเร็วและคูณคะแนน
+          </div>
+        </div>
+        <div class="card">
+          <h3>ใช้งานในบูธ</h3>
+          <div class="muted">
+            เวอร์ชันนี้เหมาะสำหรับเปิดบนจอใหญ่ในงานอีเวนต์ พร้อมให้ผู้เล่นกรอกชื่อ แข่งขันทำคะแนน และขึ้นตารางอันดับในเครื่องได้ทันที
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar">
+      <div class="event-box">
+        <h2>WGP#1 Mini Game</h2>
+        <p>ออกแบบสำหรับใช้ในงานจริง เพื่อดึงคนเข้าบูธ สร้างการแข่งขัน และต่อยอดไปสู่ระบบเก็บ lead หรือสปอนเซอร์อินทิเกรชันได้</p>
+      </div>
+
+      <div class="card">
+        <h3>ลงชื่อผู้เล่น</h3>
+        <div class="field">
+          <label for="playerName">ชื่อบน Leaderboard</label>
+          <input id="playerName" type="text" maxlength="18" placeholder="เช่น Ploysai / Team WGP" />
+        </div>
+        <div class="btn-row" style="margin-top:12px;">
+          <button class="primary" id="startBtn">Start Game</button>
+          <button class="secondary" id="resetBoardBtn">Clear Board</button>
+        </div>
+        <div class="muted" style="margin-top:10px;">
+          ใช้ชื่อสั้น กระชับ อ่านง่ายบนจอใหญ่ เพื่อให้คนดูเห็นอันดับได้ชัดเจน
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Leaderboard</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Player</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody id="boardBody"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>Scan to Join Campaign</h3>
+        <div class="qr-box">
+          <div class="qr" aria-hidden="true"></div>
+          <div class="muted">
+            ใส่ QR จริงภายหลังเพื่อพาไปยังหน้าลงทะเบียน, รับของรางวัล, หรือหน้า Follow/Lead Capture ของ WGP#1
+          </div>
+        </div>
+        <div class="sponsor-strip">
+          <div class="tag">Sponsor Slot A</div>
+          <div class="tag">Sponsor Slot B</div>
+          <div class="tag">Prize Partner</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const scoreEl = document.getElementById('score');
+    const comboEl = document.getElementById('combo');
+    const speedEl = document.getElementById('speed');
+    const statusEl = document.getElementById('status');
+    const playerNameInput = document.getElementById('playerName');
+    const playerLabel = document.getElementById('playerLabel');
+    const startBtn = document.getElementById('startBtn');
+    const resetBoardBtn = document.getElementById('resetBoardBtn');
+    const boardBody = document.getElementById('boardBody');
+
+    const W = canvas.width;
+    const H = canvas.height;
+    const waterTop = 188;
+    const laneY = [255, 310, 365];
+    const gravity = 0.88;
+    const jumpForce = -15.4;
+
+    let screen = 'menu';
+    let frame = 0;
+    let score = 0;
+    let speed = 6;
+    let combo = 1;
+    let comboStreak = 0;
+    let boostTimer = 0;
+    let impactShake = 0;
+    let currentPlayerName = 'Guest';
+
+    const player = {
+      lane: 1,
+      x: 180,
+      y: laneY[1],
+      vy: 0,
+      width: 84,
+      height: 32,
+      jumping: false,
+      tilt: 0,
+      bob: 0,
+      trail: []
+    };
+
+    let obstacles = [];
+    let particles = [];
+    let floatingTexts = [];
+    let clouds = createClouds();
+    let rings = [];
+    let waveOffset = 0;
+    let leaderboard = loadLeaderboard();
+
+    function createClouds() {
+      return Array.from({ length: 7 }, (_, i) => ({
+        x: 60 + i * 150,
+        y: 38 + (i % 3) * 20,
+        w: 72 + (i % 2) * 24,
+        s: 0.2 + Math.random() * 0.28
+      }));
+    }
+
+    function loadLeaderboard() {
+      try {
+        const raw = localStorage.getItem('wgp1_jetski_leaderboard');
+        return raw ? JSON.parse(raw) : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveLeaderboard() {
+      localStorage.setItem('wgp1_jetski_leaderboard', JSON.stringify(leaderboard));
+    }
+
+    function renderLeaderboard() {
+      boardBody.innerHTML = '';
+      if (!leaderboard.length) {
+        boardBody.innerHTML = '<tr><td colspan="3" class="muted">ยังไม่มีคะแนน</td></tr>';
+        return;
+      }
+      leaderboard.slice(0, 8).forEach((row, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><span class="rank-badge">${i + 1}</span></td>
+          <td>${escapeHtml(row.name)}</td>
+          <td class="highlight">${row.score}</td>
+        `;
+        boardBody.appendChild(tr);
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function sanitizeName(name) {
+      const cleaned = (name || '').trim().replace(/\s+/g, ' ');
+      return cleaned ? cleaned.slice(0, 18) : 'Guest';
+    }
+
+    function resetRun() {
+      frame = 0;
+      score = 0;
+      speed = 6;
+      combo = 1;
+      comboStreak = 0;
+      boostTimer = 0;
+      impactShake = 0;
+      obstacles = [];
+      particles = [];
+      floatingTexts = [];
+      rings = [];
+      player.lane = 1;
+      player.x = 180;
+      player.y = laneY[1];
+      player.vy = 0;
+      player.jumping = false;
+      player.tilt = 0;
+      player.trail = [];
+      updateHUD();
+    }
+
+    function startGame() {
+      currentPlayerName = sanitizeName(playerNameInput.value);
+      playerLabel.textContent = currentPlayerName;
+      resetRun();
+      screen = 'playing';
+      statusEl.textContent = 'กำลังแข่ง';
+    }
+
+    function backToMenu() {
+      screen = 'menu';
+      statusEl.textContent = 'กรอกชื่อ แล้วกด Start';
+    }
+
+    function spawnObstacle() {
+      const types = [
+        { kind: 'buoy', w: 28, h: 48, jumpable: true },
+        { kind: 'log', w: 62, h: 24, jumpable: true },
+        { kind: 'boat', w: 96, h: 34, jumpable: false },
+        { kind: 'wave', w: 76, h: 28, jumpable: true }
+      ];
+      const t = types[Math.floor(Math.random() * types.length)];
+      const lane = Math.floor(Math.random() * laneY.length);
+      obstacles.push({
+        x: W + 40,
+        lane,
+        y: laneY[lane],
+        width: t.w,
+        height: t.h,
+        kind: t.kind,
+        jumpable: t.jumpable,
+        passed: false
+      });
+    }
+
+    function spawnRing() {
+      const lane = Math.floor(Math.random() * laneY.length);
+      rings.push({
+        x: W + 20,
+        lane,
+        y: laneY[lane] - 34,
+        r: 16,
+        taken: false
+      });
+    }
+
+    function jump() {
+      if (screen !== 'playing') return;
+      if (!player.jumping) {
+        player.vy = jumpForce;
+        player.jumping = true;
+        player.tilt = -0.18;
+      }
+    }
+
+    function moveLane(dir) {
+      if (screen !== 'playing') return;
+      const next = player.lane + dir;
+      if (next >= 0 && next < laneY.length) {
+        player.lane = next;
+        if (!player.jumping) player.y = laneY[player.lane];
+      }
+    }
+
+    function addParticles(x, y, count, type = 'water') {
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x,
+          y,
+          vx: -2 + Math.random() * 4,
+          vy: type === 'boost' ? -3 + Math.random() * 2 : -1 - Math.random() * 4,
+          r: 2 + Math.random() * 4,
+          life: 24 + Math.random() * 18,
+          type
+        });
+      }
+    }
+
+    function addFloatingText(text, x, y, color = '#ffffff') {
+      floatingTexts.push({ x, y, text, life: 42, color });
+    }
+
+    function finishRun() {
+      screen = 'gameover';
+      statusEl.textContent = 'จบรอบ! กด Start เพื่อเล่นใหม่';
+      impactShake = 10;
+      addParticles(player.x + 20, player.y, 22, 'water');
+      saveScore();
+    }
+
+    function saveScore() {
+      const finalScore = Math.floor(score);
+      leaderboard.push({ name: currentPlayerName, score: finalScore, ts: Date.now() });
+      leaderboard.sort((a, b) => b.score - a.score || a.ts - b.ts);
+      leaderboard = leaderboard.slice(0, 20);
+      saveLeaderboard();
+      renderLeaderboard();
+    }
+
+    function updateHUD() {
+      scoreEl.textContent = Math.floor(score);
+      comboEl.textContent = `x${combo}`;
+      speedEl.textContent = ((boostTimer > 0 ? speed * 1.25 : speed) / 6).toFixed(1);
+    }
+
+    function updateGame() {
+      frame++;
+      waveOffset += speed * 0.018;
+      if (impactShake > 0) impactShake *= 0.84;
+
+      clouds.forEach(c => {
+        c.x -= c.s;
+        if (c.x + c.w < -30) c.x = W + 50;
+      });
+
+      if (screen === 'playing') {
+        score += 0.08 * combo + (boostTimer > 0 ? 0.12 : 0);
+        speed += 0.0014;
+
+        const obstacleRate = Math.max(48, Math.floor(105 - speed * 5));
+        if (frame % obstacleRate === 0) spawnObstacle();
+        if (frame % 260 === 0) spawnRing();
+      }
+
+      if (boostTimer > 0) boostTimer--;
+      const activeSpeed = boostTimer > 0 ? speed * 1.25 : speed;
+
+      player.bob += 0.1;
+      player.x = 180 + Math.sin(player.bob) * 2;
+
+      if (player.jumping) {
+        player.vy += gravity;
+        player.y += player.vy;
+        player.tilt = Math.max(-0.2, Math.min(0.22, player.vy * 0.015));
+        if (player.y >= laneY[player.lane]) {
+          player.y = laneY[player.lane];
+          player.vy = 0;
+          player.jumping = false;
+          player.tilt = 0;
+          addParticles(player.x + 8, player.y + 14, 8, 'water');
+        }
+      } else {
+        player.y = laneY[player.lane];
+        player.tilt = Math.sin(player.bob * 2) * 0.01;
+      }
+
+      if (screen === 'playing' && frame % 4 === 0) {
+        player.trail.push({ x: player.x - 24, y: player.y + 12, life: 20, boost: boostTimer > 0 });
+      }
+      player.trail.forEach(t => {
+        t.x -= activeSpeed * 0.85;
+        t.life -= 1;
+      });
+      player.trail = player.trail.filter(t => t.life > 0);
+
+      obstacles.forEach(ob => {
+        ob.x -= activeSpeed;
+        if (!ob.passed && ob.x + ob.width < player.x) {
+          ob.passed = true;
+          comboStreak += 1;
+          combo = Math.min(5, 1 + Math.floor(comboStreak / 3));
+          score += 4 * combo;
+          if (combo > 1) addFloatingText(`COMBO x${combo}`, player.x + 40, player.y - 46, '#ffe08d');
+        }
+
+        const px = player.x - player.width / 2 + 10;
+        const py = player.y - player.height / 2 + 4;
+        const pw = player.width - 18;
+        const ph = player.height - 8;
+        const ox = ob.x;
+        const oy = ob.y - ob.height / 2;
+        const ow = ob.width;
+        const oh = ob.height;
+        const collides = px < ox + ow && px + pw > ox && py < oy + oh && py + ph > oy;
+
+        if (screen === 'playing' && collides) {
+          if (ob.jumpable && player.jumping && player.y + player.height / 2 < ob.y - 4) {
+            // safe
+          } else {
+            combo = 1;
+            comboStreak = 0;
+            finishRun();
+          }
+        }
+      });
+      obstacles = obstacles.filter(ob => ob.x + ob.width > -90);
+
+      rings.forEach(r => {
+        r.x -= activeSpeed;
+        const dx = (player.x + 8) - r.x;
+        const dy = (player.y - 6) - r.y;
+        const hit = Math.sqrt(dx * dx + dy * dy) < r.r + 16;
+        if (screen === 'playing' && !r.taken && hit) {
+          r.taken = true;
+          boostTimer = 140;
+          score += 18;
+          addParticles(r.x, r.y, 16, 'boost');
+          addFloatingText('BOOST!', r.x, r.y - 18, '#9df7ff');
+        }
+      });
+      rings = rings.filter(r => !r.taken && r.x + r.r > -30);
+
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += p.type === 'boost' ? 0.08 : 0.2;
+        p.life -= 1;
+      });
+      particles = particles.filter(p => p.life > 0);
+
+      floatingTexts.forEach(t => {
+        t.y -= 0.55;
+        t.life -= 1;
+      });
+      floatingTexts = floatingTexts.filter(t => t.life > 0);
+
+      updateHUD();
+    }
+
+    function drawBackground() {
+      clouds.forEach(c => drawCloud(c.x, c.y, c.w));
+
+      const sun = ctx.createRadialGradient(770, 84, 10, 770, 84, 72);
+      sun.addColorStop(0, 'rgba(255,234,174,0.95)');
+      sun.addColorStop(1, 'rgba(255,234,174,0)');
+      ctx.fillStyle = sun;
+      ctx.beginPath();
+      ctx.arc(770, 84, 72, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#68a96f';
+      ctx.beginPath();
+      ctx.moveTo(0, waterTop + 10);
+      for (let x = 0; x <= W; x += 80) {
+        ctx.lineTo(x, waterTop + 14 - Math.sin((x + waveOffset * 8) * 0.01) * 8 - (x % 160 === 0 ? 12 : 0));
+      }
+      ctx.lineTo(W, waterTop + 48);
+      ctx.lineTo(0, waterTop + 48);
+      ctx.closePath();
+      ctx.fill();
+
+      for (let i = 0; i < 5; i++) {
+        drawWaveLine(waterTop + 56 + i * 44, 17 + i * 3, 0.013 + i * 0.002, 2);
+      }
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+      ctx.setLineDash([8, 10]);
+      laneY.forEach(y => {
+        ctx.beginPath();
+        ctx.moveTo(0, y + 16);
+        ctx.lineTo(W, y + 16);
+        ctx.stroke();
+      });
+      ctx.setLineDash([]);
+    }
+
+    function drawWaveLine(y, amp, freq, thickness) {
+      ctx.beginPath();
+      for (let x = 0; x <= W; x++) {
+        const yy = y + Math.sin(x * freq + waveOffset + y * 0.01) * amp;
+        if (x === 0) ctx.moveTo(x, yy);
+        else ctx.lineTo(x, yy);
+      }
+      ctx.lineWidth = thickness;
+      ctx.strokeStyle = 'rgba(255,255,255,0.42)';
+      ctx.stroke();
+    }
+
+    function drawCloud(x, y, w) {
+      ctx.fillStyle = 'rgba(255,255,255,0.86)';
+      ctx.beginPath();
+      ctx.arc(x, y, w * 0.22, 0, Math.PI * 2);
+      ctx.arc(x + w * 0.22, y - 10, w * 0.28, 0, Math.PI * 2);
+      ctx.arc(x + w * 0.48, y, w * 0.23, 0, Math.PI * 2);
+      ctx.arc(x + w * 0.28, y + 8, w * 0.24, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawPlayer() {
+      player.trail.forEach(t => {
+        ctx.save();
+        ctx.globalAlpha = t.life / 22;
+        ctx.fillStyle = t.boost ? '#9df7ff' : '#ffffff';
+        ctx.beginPath();
+        ctx.ellipse(t.x, t.y, 16, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+
+      ctx.save();
+      ctx.translate(player.x, player.y + (player.jumping ? -2 : Math.sin(player.bob * 2) * 1.2));
+      ctx.rotate(player.tilt);
+
+      ctx.fillStyle = boostTimer > 0 ? 'rgba(157,247,255,0.75)' : 'rgba(255,255,255,0.75)';
+      ctx.beginPath();
+      ctx.ellipse(-24, 12, 28, 9, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#f37021';
+      ctx.beginPath();
+      ctx.moveTo(-36, 6);
+      ctx.lineTo(-11, -13);
+      ctx.lineTo(31, -13);
+      ctx.lineTo(40, -2);
+      ctx.lineTo(26, 9);
+      ctx.lineTo(-22, 10);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#ffd7bf';
+      ctx.fillRect(20, -8, 10, 4);
+      ctx.fillStyle = '#1a2430';
+      ctx.fillRect(-2, -17, 22, 8);
+
+      ctx.fillStyle = '#1a2430';
+      ctx.beginPath();
+      ctx.arc(-11, -23, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#1a2430';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(-11, -16);
+      ctx.lineTo(-3, -5);
+      ctx.lineTo(7, -13);
+      ctx.stroke();
+
+      if (boostTimer > 0) {
+        ctx.strokeStyle = 'rgba(157,247,255,0.9)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(0, -2, 44, 0.2, 2.5);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawObstacle(ob) {
+      const x = ob.x;
+      const y = ob.y;
+      if (ob.kind === 'buoy') {
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.ellipse(x + ob.width / 2, y + 12, 16, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ff7a00';
+        ctx.beginPath();
+        ctx.moveTo(x + ob.width / 2, y - 23);
+        ctx.lineTo(x + ob.width, y + 10);
+        ctx.lineTo(x, y + 10);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(x + 8, y - 2, ob.width - 16, 5);
+      }
+      if (ob.kind === 'log') {
+        ctx.fillStyle = '#7b5231';
+        roundRectFill(x, y - 10, ob.width, ob.height, 10);
+      }
+      if (ob.kind === 'boat') {
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.ellipse(x + ob.width * 0.38, y + 14, ob.width * 0.45, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#e63d3d';
+        ctx.beginPath();
+        ctx.moveTo(x + 6, y + 8);
+        ctx.lineTo(x + 22, y - 12);
+        ctx.lineTo(x + ob.width - 18, y - 12);
+        ctx.lineTo(x + ob.width - 4, y + 8);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#8ed6ff';
+        ctx.fillRect(x + 30, y - 8, 24, 10);
+      }
+      if (ob.kind === 'wave') {
+        ctx.strokeStyle = '#e6fbff';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        for (let i = 0; i <= ob.width; i++) {
+          const yy = y + Math.sin(i * 0.15) * 10;
+          if (i === 0) ctx.moveTo(x + i, yy);
+          else ctx.lineTo(x + i, yy);
+        }
+        ctx.stroke();
+      }
+    }
+
+    function drawRing(r) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(157,247,255,0.95)';
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, r.r + 6, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawParticles() {
+      particles.forEach(p => {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.life / 30);
+        ctx.fillStyle = p.type === 'boost' ? '#9df7ff' : '#ffffff';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+    }
+
+    function drawFloatingTexts() {
+      floatingTexts.forEach(t => {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, t.life / 42);
+        ctx.fillStyle = t.color;
+        ctx.font = 'bold 20px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(t.text, t.x, t.y);
+        ctx.restore();
+      });
+    }
+
+    function roundRectFill(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawOverlay() {
+      if (screen === 'menu') {
+        drawCenteredPanel('WGP#1 JET SKI CHALLENGE', 'กรอกชื่อ แล้วกด Start Game เพื่อเริ่มแข่ง');
+      }
+      if (screen === 'gameover') {
+        drawCenteredPanel('ROUND COMPLETE', `ผู้เล่น ${currentPlayerName} | คะแนน ${Math.floor(score)}`);
+      }
+      if (boostTimer > 0 && screen === 'playing') {
+        ctx.save();
+        ctx.fillStyle = 'rgba(157,247,255,0.18)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.restore();
+      }
+    }
+
+    function drawCenteredPanel(title, subtitle) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(3,22,40,0.35)';
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = 'rgba(255,255,255,0.95)';
+      roundRectFill(W / 2 - 265, H / 2 - 74, 530, 148, 22);
+      ctx.fillStyle = '#083b66';
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 34px Arial';
+      ctx.fillText(title, W / 2, H / 2 - 8);
+      ctx.font = '20px Arial';
+      ctx.fillText(subtitle, W / 2, H / 2 + 34);
+      ctx.restore();
+    }
+
+    function drawFrame() {
+      ctx.clearRect(0, 0, W, H);
+      ctx.save();
+      if (impactShake > 0) {
+        ctx.translate((Math.random() - 0.5) * impactShake, (Math.random() - 0.5) * impactShake);
+      }
+      drawBackground();
+      obstacles.forEach(drawObstacle);
+      rings.forEach(drawRing);
+      drawPlayer();
+      drawParticles();
+      drawFloatingTexts();
+      drawOverlay();
+      ctx.restore();
+    }
+
+    function loop() {
+      updateGame();
+      drawFrame();
+      requestAnimationFrame(loop);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' || e.code === 'ArrowUp') {
+        e.preventDefault();
+        if (screen === 'menu') startGame();
+        else if (screen === 'playing') jump();
+      }
+      if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        moveLane(-1);
+      }
+      if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        moveLane(1);
+      }
+      if (e.code === 'KeyR') {
+        if (screen === 'gameover') startGame();
+        else backToMenu();
+      }
+    });
+
+    startBtn.addEventListener('click', startGame);
+    resetBoardBtn.addEventListener('click', () => {
+      leaderboard = [];
+      saveLeaderboard();
+      renderLeaderboard();
+    });
+
+    renderLeaderboard();
+    backToMenu();
+    loop();
+  </script>
+</body>
+</html>
