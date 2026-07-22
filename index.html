@@ -51,6 +51,11 @@
       <div class="race-frame">
         <canvas id="game" width="1440" height="810" aria-label="WGP#1 jet ski racing game"></canvas>
 
+        <div class="game-toolbar" aria-label="Game options">
+          <button id="pauseGame" type="button" aria-label="Pause game" aria-pressed="false">Ⅱ</button>
+          <button id="fullscreenGame" type="button" aria-label="Enter full screen">⛶</button>
+        </div>
+
         <div class="hud hud-top">
           <div class="hud-block"><small>SPEED</small><strong id="speed">096</strong><span>KM/H</span></div>
           <div class="hud-block score-block"><small>SCORE</small><strong id="score">000000</strong></div>
@@ -66,8 +71,27 @@
         <div class="countdown" id="countdown">3</div>
 
         <div class="touch-controls" aria-label="Touch controls">
-          <div><button data-action="left" aria-label="Move left">‹</button><button data-action="right" aria-label="Move right">›</button><button data-action="jump" aria-label="Jump">↑</button></div>
-          <button class="nitro-button" data-action="boost">NITRO</button>
+          <div class="control-cluster steering-controls">
+            <button data-action="left" aria-label="Move left">‹</button>
+            <button data-action="right" aria-label="Move right">›</button>
+          </div>
+          <div class="control-cluster action-controls">
+            <button class="jump-button" data-action="jump" aria-label="Jump"><span>↑</span><small>JUMP</small></button>
+            <button class="nitro-button" data-action="boost" aria-label="Use Nitro">NITRO</button>
+          </div>
+        </div>
+
+        <div class="pause-screen" id="pauseScreen" aria-hidden="true">
+          <p class="kicker">RACE CONTROL</p>
+          <h2>PAUSED</h2>
+          <button class="primary-button" id="resumeGame" type="button">RESUME RACE <span>▶</span></button>
+          <button class="secondary-button" id="pauseHome" type="button">BACK TO HOME</button>
+        </div>
+
+        <div class="rotate-device" aria-hidden="true">
+          <div class="rotate-icon">↻</div>
+          <strong>ROTATE YOUR DEVICE</strong>
+          <span>เล่นในแนวนอนเพื่อการควบคุมที่ดีที่สุด</span>
         </div>
 
         <div class="result-screen" id="resultScreen" aria-hidden="true">
