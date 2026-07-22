@@ -1,8 +1,8 @@
 :root{--orange:#ff5b00;--orange-2:#ff8a00;--ink:#05070a;--panel:#0a1016;--muted:#8b9aa6;--line:rgba(255,255,255,.13);--white:#f7fafc}
 
 *{box-sizing:border-box}
-html{background:var(--ink);color:var(--white);font-family:Inter,Arial,sans-serif}
-body{margin:0;min-height:100vh;background:radial-gradient(circle at 75% 10%,#193444 0,transparent 38%),var(--ink)}
+html{background:var(--ink);color:var(--white);font-family:Inter,Arial,sans-serif;overscroll-behavior:none}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at 75% 10%,#193444 0,transparent 38%),var(--ink);overscroll-behavior:none}
 button,input{font:inherit}
 .app{min-height:100vh;overflow:hidden}
 .topbar{height:82px;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(20px,4vw,64px);border-bottom:1px solid var(--line);position:relative;z-index:10}
@@ -40,10 +40,13 @@ button,input{font:inherit}
 .controls-preview span{display:block;margin-top:8px}
 .controls-preview kbd{display:inline-grid;place-items:center;min-width:25px;height:23px;margin-right:3px;padding:0 5px;border:1px solid #37444d;background:#111920;color:#fff;font:700 9px Inter}
 
-.race-screen{display:none;position:fixed;inset:0;background:#020407;z-index:20}
+.race-screen{display:none;position:fixed;inset:0;width:100vw;height:100vh;height:100dvh;background:#020407;z-index:20;overscroll-behavior:none}
 .race-screen.active{display:grid;place-items:center}
-.race-frame{width:100vw;height:100vh;position:relative;overflow:hidden}
+.race-frame{width:100vw;height:100vh;height:100dvh;position:relative;overflow:hidden;isolation:isolate}
 .race-frame canvas{width:100%;height:100%;display:block;object-fit:cover;touch-action:none}
+.game-toolbar{position:absolute;z-index:4;top:max(14px,env(safe-area-inset-top));right:max(14px,env(safe-area-inset-right));display:flex;gap:8px}
+.game-toolbar button{width:42px;height:42px;border:1px solid rgba(255,255,255,.25);border-radius:50%;background:rgba(3,7,10,.58);color:#fff;font:800 16px Inter;cursor:pointer;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);touch-action:manipulation}
+.game-toolbar button:active{background:var(--orange);transform:scale(.96)}
 .hud{position:absolute;left:clamp(16px,3vw,50px);right:clamp(16px,3vw,50px);display:flex;pointer-events:none;text-shadow:0 3px 15px #000}
 .hud-top{top:clamp(18px,3vw,45px);align-items:flex-start}
 .hud-block{padding:7px 18px 9px;border-left:3px solid var(--orange);background:linear-gradient(90deg,rgba(3,6,9,.88),rgba(3,6,9,.15));min-width:145px}
@@ -70,9 +73,22 @@ button,input{font:inherit}
 25%{opacity:1}
 100%{opacity:0;transform:scale(.75)}
 }
-.touch-controls{display:none;position:absolute;left:16px;right:16px;bottom:72px;justify-content:space-between;pointer-events:none}
-.touch-controls button{pointer-events:auto;width:58px;height:58px;margin-right:6px;border:1px solid rgba(255,255,255,.35);border-radius:50%;background:rgba(3,7,10,.62);color:#fff;font-size:24px;backdrop-filter:blur(7px);touch-action:manipulation}
-.touch-controls .nitro-button{width:78px;border-radius:30px;background:rgba(255,91,0,.82);font-size:11px;font-weight:900}
+.touch-controls{display:none;position:absolute;z-index:3;left:max(18px,env(safe-area-inset-left));right:max(18px,env(safe-area-inset-right));bottom:max(18px,env(safe-area-inset-bottom));justify-content:space-between;align-items:flex-end;pointer-events:none;user-select:none;-webkit-user-select:none}
+.control-cluster{display:flex;align-items:flex-end;gap:10px}
+.touch-controls button{pointer-events:auto;width:72px;height:72px;border:1px solid rgba(255,255,255,.38);border-radius:50%;background:rgba(3,7,10,.66);color:#fff;font-size:34px;box-shadow:0 9px 26px rgba(0,0,0,.32),inset 0 0 20px rgba(255,255,255,.04);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);touch-action:none;-webkit-tap-highlight-color:transparent}
+.touch-controls button.active,.touch-controls button:active{border-color:#fff;background:rgba(255,91,0,.9);transform:scale(.94)}
+.touch-controls .jump-button{display:grid;place-items:center;align-content:center;font-size:25px;line-height:1}
+.touch-controls .jump-button small{font-size:8px;font-weight:900;letter-spacing:1px;margin-top:3px}
+.touch-controls .nitro-button{width:86px;height:86px;background:linear-gradient(145deg,rgba(255,122,0,.95),rgba(220,48,0,.9));font-size:12px;font-weight:900;letter-spacing:.8px;box-shadow:0 0 24px rgba(255,91,0,.28)}
+.pause-screen{position:absolute;inset:0;z-index:8;display:none;place-items:center;align-content:center;padding:24px;text-align:center;background:radial-gradient(circle,rgba(8,22,31,.72),rgba(2,4,7,.96));backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.pause-screen.active{display:grid}
+.pause-screen h2{font:900 italic clamp(76px,14vw,160px)/.8 "Barlow Condensed";margin:6px 0 25px}
+.pause-screen .primary-button{width:min(390px,90vw)}
+.rotate-device{display:none;position:absolute;inset:0;z-index:20;place-items:center;align-content:center;gap:10px;padding:25px;text-align:center;background:radial-gradient(circle at 50% 35%,#153748,#030609 70%)}
+.rotate-icon{font-size:58px;color:var(--orange);animation:rotateHint 1.8s ease-in-out infinite}
+.rotate-device strong{font:900 italic 30px "Barlow Condensed";letter-spacing:1px}
+.rotate-device span{color:#9dafb9;font-size:12px}
+@keyframes rotateHint{50%{transform:rotate(90deg)}}
 .result-screen{position:absolute;inset:0;display:none;place-items:center;align-content:center;padding:25px;text-align:center;background:radial-gradient(circle,rgba(8,22,31,.65),rgba(2,4,7,.96));z-index:5}
 .result-screen.active{display:grid}
 .result-screen h2{font:900 italic clamp(76px,12vw,150px)/.8 "Barlow Condensed";margin:5px 0;color:#fff}
@@ -125,8 +141,34 @@ button,input{font:inherit}
 .nitro-panel{width:165px}
 .race-callout{position:absolute;left:0;bottom:38px;font-size:19px;margin:0}
 .combo{font-size:14px}
-.touch-controls{display:flex}
 .result-stats{grid-template-columns:repeat(3,1fr);width:100%;max-width:390px}
 .result-stats div{padding:11px 4px}
 .result-stats strong{font-size:15px}
 }
+
+@media(pointer:coarse){
+body.racing{position:fixed;inset:0;overflow:hidden}
+.touch-controls{display:flex}
+.hud-bottom{bottom:max(116px,calc(env(safe-area-inset-bottom) + 104px))}
+.game-toolbar button{width:46px;height:46px}
+}
+
+@media(pointer:coarse) and (orientation:landscape) and (max-height:600px){
+.hud-top{top:max(10px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));right:max(118px,calc(env(safe-area-inset-right) + 104px))}
+.hud-block{min-width:92px;padding:4px 9px}
+.hud-block strong{font-size:27px}
+.course-block{width:min(250px,34vw)}
+.course-block strong{font-size:17px}
+.hud-bottom{left:calc(max(18px,env(safe-area-inset-left)) + 165px);right:calc(max(18px,env(safe-area-inset-right)) + 184px);bottom:max(20px,env(safe-area-inset-bottom))}
+.nitro-panel{width:min(190px,24vw)}
+.race-callout{font-size:19px}
+.combo{font-size:14px}
+.touch-controls button{width:68px;height:68px}
+.touch-controls .nitro-button{width:80px;height:80px}
+}
+
+@media(pointer:coarse) and (orientation:portrait) and (max-width:1024px){
+.rotate-device{display:grid}
+}
+
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
