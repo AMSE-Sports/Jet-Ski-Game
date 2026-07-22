@@ -2,107 +2,90 @@
 <html lang="th">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#05080d">
-  <title>WGP#1 World Series — Time Attack</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,800&family=Inter:wght@400;600;700;800&display=swap');
-    *{box-sizing:border-box} :root{--orange:#ff5a00;--gold:#ffba35;--ink:#05080d;--navy:#081724;--cyan:#2ce8ff;--line:rgba(255,255,255,.12)}
-    html,body{margin:0;min-height:100%;background:#03060a;color:#fff;font-family:Inter,Arial,sans-serif}
-    body{overflow-x:hidden;background:radial-gradient(circle at 50% -10%,#173246 0,#08111a 35%,#03060a 75%)}
-    button,input{font:inherit}.shell{width:min(1500px,100%);margin:auto;padding:18px}
-    .topbar{height:72px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);margin-bottom:16px}
-    .brand{display:flex;align-items:center;gap:14px}.mark{font:900 34px/1 "Barlow Condensed";font-style:italic;letter-spacing:-1px}.mark b{color:var(--orange)}
-    .series{padding-left:14px;border-left:1px solid var(--line);font:700 12px/1.3 Inter;letter-spacing:2.5px;color:#9db1c0;text-transform:uppercase}
-    .live{display:flex;gap:9px;align-items:center;font:800 11px Inter;letter-spacing:2px}.live i{width:8px;height:8px;border-radius:50%;background:var(--orange);box-shadow:0 0 16px var(--orange);animation:pulse 1.2s infinite}
-    @keyframes pulse{50%{opacity:.35}}
-    .layout{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px}.stage{position:relative;min-width:0}
-    .viewport{position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.18);background:#061621;box-shadow:0 32px 70px rgba(0,0,0,.45)}
-    canvas{display:block;width:100%;height:auto;aspect-ratio:16/8.3;touch-action:none}
-    .hud{position:absolute;inset:16px 18px auto;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none;text-shadow:0 2px 12px #000}
-    .hud-left{display:flex;gap:8px}.telemetry{min-width:112px;padding:8px 12px;border-left:3px solid var(--orange);background:linear-gradient(90deg,rgba(3,7,11,.86),rgba(3,7,11,.3));backdrop-filter:blur(8px)}
-    .telemetry small,.distance small{display:block;color:#9db1c0;font:700 9px Inter;letter-spacing:1.5px}.telemetry strong{font:800 25px/1 "Barlow Condensed"}.telemetry em{font:600 11px Inter;color:#b7c8d4;font-style:normal}
-    .distance{text-align:right}.distance strong{display:block;font:800 35px/1 "Barlow Condensed"}.distance span{display:block;font:700 11px Inter;color:var(--orange);letter-spacing:1px}
-    .meter{position:absolute;left:22px;right:22px;bottom:18px;display:flex;gap:14px;align-items:end;pointer-events:none}.boost-box{width:230px}
-    .meter-label{display:flex;justify-content:space-between;margin-bottom:5px;font:800 10px Inter;letter-spacing:1.6px}.bar{height:8px;background:rgba(255,255,255,.14);transform:skewX(-16deg);overflow:hidden}.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--orange),var(--gold));box-shadow:0 0 18px var(--orange);transition:width .12s}
-    .callout{margin-left:auto;font:900 italic 22px "Barlow Condensed";color:#fff;letter-spacing:1px;opacity:0;transform:translateY(7px);transition:.2s}.callout.show{opacity:1;transform:none}
-    .overlay{position:absolute;inset:0;display:grid;place-items:center;background:radial-gradient(circle,rgba(3,8,13,.35),rgba(3,8,13,.88));text-align:center;padding:24px;transition:.25s}.overlay.hidden{opacity:0;pointer-events:none}
-    .eyebrow{color:var(--orange);font:800 11px Inter;letter-spacing:4px}.overlay h1{font:900 italic clamp(42px,7vw,86px)/.85 "Barlow Condensed";letter-spacing:-2px;margin:12px 0}.overlay h1 span{display:block;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.65)}
-    .overlay p{max-width:540px;color:#adc0ce;line-height:1.6;margin:15px auto 23px}.cta{border:0;color:#fff;background:var(--orange);padding:14px 30px;font:900 italic 18px "Barlow Condensed";letter-spacing:1px;clip-path:polygon(9px 0,100% 0,calc(100% - 9px) 100%,0 100%);cursor:pointer}.cta:hover{filter:brightness(1.15)}
-    .countdown{position:absolute;inset:0;display:grid;place-items:center;font:900 italic 150px/1 "Barlow Condensed";text-shadow:0 8px 40px #000;pointer-events:none;opacity:0}.countdown.on{animation:count .55s ease}@keyframes count{0%{opacity:0;transform:scale(1.5)}30%{opacity:1}100%{opacity:0;transform:scale(.85)}}
-    .touch{display:none;position:absolute;inset:auto 16px 22px;justify-content:space-between;pointer-events:none}.touch-group{display:flex;gap:8px}.touch button{pointer-events:auto;width:56px;height:56px;border:1px solid rgba(255,255,255,.35);border-radius:50%;background:rgba(3,8,13,.6);color:#fff;font-size:23px;backdrop-filter:blur(8px);touch-action:manipulation}.touch .nitro{width:76px;border-radius:30px;background:rgba(255,90,0,.75);font:900 13px Inter}
-    .race-info{display:grid;grid-template-columns:repeat(3,1fr);margin-top:10px;border:1px solid var(--line);background:rgba(6,15,23,.72)}.race-info div{padding:12px 16px;border-right:1px solid var(--line)}.race-info div:last-child{border:0}.race-info small{display:block;color:#698292;font:700 9px Inter;letter-spacing:1.4px}.race-info strong{font:700 13px Inter}
-    .side{display:flex;flex-direction:column;gap:12px}.panel{border:1px solid var(--line);background:linear-gradient(145deg,rgba(16,29,40,.96),rgba(5,10,15,.96));padding:18px}.panel.orange{background:linear-gradient(145deg,#ff6a00,#c73800);overflow:hidden;position:relative}.panel.orange:after{content:"01";position:absolute;right:-5px;bottom:-31px;font:900 115px "Barlow Condensed";opacity:.12}.panel small{font:800 9px Inter;color:#8da6b7;letter-spacing:2px}.panel.orange small{color:#ffd5bd}.panel h2{font:900 italic 30px/1 "Barlow Condensed";margin:8px 0}.panel p{font-size:12px;line-height:1.6;color:#9cb1bf;margin:0}.panel.orange p{color:#fff}
-    label{display:block;font:800 10px Inter;letter-spacing:1.5px;color:#8da6b7;margin-bottom:8px}input{width:100%;border:1px solid var(--line);background:#03070b;color:#fff;padding:13px;outline:none;text-transform:uppercase;font-weight:800}input:focus{border-color:var(--orange)}
-    .side .cta{width:100%;margin-top:10px}.leader-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.leader-head h3{font:800 16px Inter;margin:0}.text-btn{border:0;background:none;color:#607989;font:700 9px Inter;cursor:pointer}
-    table{border-collapse:collapse;width:100%;font-size:12px}td{border-top:1px solid rgba(255,255,255,.07);padding:10px 4px}td:first-child{color:#708898;width:28px}td:last-child{text-align:right;font:800 15px "Barlow Condensed"}.champ td{color:var(--gold)}
-    .keys{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.key{border:1px solid var(--line);padding:9px;color:#9db1c0;font-size:10px}.key b{color:#fff}
-    @media(max-width:1050px){.layout{grid-template-columns:1fr}.side{display:grid;grid-template-columns:1fr 1fr}.panel.orange{grid-column:1/-1}}
-    @media(max-width:700px){.shell{padding:0}.topbar{height:58px;padding:0 13px;margin:0}.series,.live span{display:none}.mark{font-size:28px}.layout{display:block}.viewport{border-left:0;border-right:0}.hud{inset:9px 10px auto}.telemetry{min-width:auto;padding:5px 8px}.telemetry:nth-child(2){display:none}.telemetry strong{font-size:19px}.distance strong{font-size:24px}.meter{left:12px;right:12px;bottom:8px}.boost-box{width:150px}.touch{display:flex}.side{display:block;padding:12px}.panel{margin-bottom:10px}.race-info{margin:0;border-left:0;border-right:0}.race-info div{padding:9px}.race-info strong{font-size:10px}.overlay h1{font-size:46px}.overlay p{font-size:12px}.overlay{padding:16px}.countdown{font-size:90px}}
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#05070a">
+  <meta name="description" content="WGP#1 World Series official Time Attack game experience">
+  <title>WGP#1 — Time Attack</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,800;1,900&family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <main class="shell">
-    <header class="topbar"><div class="brand"><div class="mark">WGP<b>#1</b></div><div class="series">World Series<br>Official Game Experience</div></div><div class="live"><i></i><span>TIME ATTACK // LIVE TIMING</span></div></header>
-    <div class="layout">
-      <section class="stage">
-        <div class="viewport">
-          <canvas id="game" width="1200" height="622" aria-label="WGP#1 jet ski racing game"></canvas>
-          <div class="hud"><div class="hud-left"><div class="telemetry"><small>SPEED</small><strong id="speed">096</strong> <em>KM/H</em></div><div class="telemetry"><small>SCORE</small><strong id="score">000000</strong></div></div><div class="distance"><small>COURSE</small><strong id="distance">0.00 KM</strong><span id="combo">RACE READY</span></div></div>
-          <div class="meter"><div class="boost-box"><div class="meter-label"><span>NITRO ENERGY</span><span id="boostValue">30%</span></div><div class="bar"><i id="boostBar"></i></div></div><div class="callout" id="callout">PERFECT LINE +250</div></div>
-          <div class="countdown" id="countdown">3</div>
-          <div class="overlay" id="overlay"><div><div class="eyebrow">WGP#1 WORLD SERIES</div><h1>TIME ATTACK <span>CHALLENGING LIMITS</span></h1><p>เข้าไลน์ให้แม่น หลบคู่แข่ง เก็บ Gate และใช้ Nitro ในจังหวะที่เหมาะสม เพื่อทำคะแนนสูงสุดบนสนาม WGP#1</p><button class="cta" id="overlayBtn">ENTER THE RACE</button></div></div>
-          <div class="touch"><div class="touch-group"><button data-action="left" aria-label="move left">‹</button><button data-action="right" aria-label="move right">›</button><button data-action="jump" aria-label="jump">↑</button></div><button class="nitro" data-action="boost">NITRO</button></div>
+  <main class="app">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="WGP number one home">
+        <span class="wordmark">WGP<span>#1</span></span>
+        <span class="brand-copy">WORLD SERIES<br>OFFICIAL GAME</span>
+      </a>
+      <div class="event-status"><i></i><span>PATTAYA · THAILAND</span></div>
+    </header>
+
+    <section class="hero" id="homeScreen">
+      <div class="hero-copy">
+        <p class="kicker">WGP#1 DIGITAL RACE EXPERIENCE</p>
+        <h1>OWN<br><em>THE WATER.</em></h1>
+        <p class="intro">เข้าไลน์ให้แม่น หลบคู่แข่ง และเลือกใช้ Nitro ให้ถูกจังหวะ เพื่อทำคะแนนสูงสุดบนสนาม Time Attack ระยะ 3 กิโลเมตร</p>
+        <div class="race-specs" aria-label="Race information">
+          <div><small>FORMAT</small><strong>TIME ATTACK</strong></div>
+          <div><small>DISTANCE</small><strong>3.00 KM</strong></div>
+          <div><small>DIFFICULTY</small><strong>PRO</strong></div>
         </div>
-        <div class="race-info"><div><small>VENUE</small><strong>PATTAYA • THAILAND</strong></div><div><small>RACE FORMAT</small><strong>3.00 KM TIME ATTACK</strong></div><div><small>CONDITIONS</small><strong>OPEN WATER • 28°C</strong></div></div>
-      </section>
-      <aside class="side">
-        <section class="panel orange"><small>OFFICIAL DIGITAL EXPERIENCE</small><h2>RIDE LIKE A CHAMPION</h2><p>สัมผัสความเร็ว การตัดสินใจ และแรงกดดันแบบการแข่งขัน WGP#1 ในสนาม Time Attack</p></section>
-        <section class="panel"><label for="playerName">RIDER NAME</label><input id="playerName" maxlength="14" value="WGP RIDER" autocomplete="off"><button class="cta" id="startBtn">START RACE</button><div class="keys"><div class="key"><b>← →</b> CHANGE LINE</div><div class="key"><b>↑ / SPACE</b> JUMP</div><div class="key"><b>SHIFT</b> NITRO</div><div class="key"><b>R</b> RESTART</div></div></section>
-        <section class="panel"><div class="leader-head"><h3>LOCAL LEADERBOARD</h3><button class="text-btn" id="clearBtn">RESET</button></div><table><tbody id="leaderboard"></tbody></table></section>
-      </aside>
-    </div>
+      </div>
+
+      <div class="entry-card">
+        <p class="step">01 / ENTER THE RACE</p>
+        <h2>RIDER<br>REGISTRATION</h2>
+        <label for="playerName">RIDER NAME</label>
+        <input id="playerName" maxlength="14" value="WGP RIDER" autocomplete="off" spellcheck="false">
+        <button class="primary-button" id="enterRace">START RACE <span>→</span></button>
+        <div class="controls-preview">
+          <p><kbd>←</kbd><kbd>→</kbd><span>CHANGE LINE</span></p>
+          <p><kbd>↑</kbd><span>JUMP</span></p>
+          <p><kbd>SHIFT</kbd><span>NITRO</span></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="race-screen" id="raceScreen" aria-hidden="true">
+      <div class="race-frame">
+        <canvas id="game" width="1440" height="810" aria-label="WGP#1 jet ski racing game"></canvas>
+
+        <div class="hud hud-top">
+          <div class="hud-block"><small>SPEED</small><strong id="speed">096</strong><span>KM/H</span></div>
+          <div class="hud-block score-block"><small>SCORE</small><strong id="score">000000</strong></div>
+          <div class="course-block"><small>COURSE PROGRESS</small><strong id="distance">0.00 / 3.00 KM</strong><div class="progress"><i id="courseBar"></i></div></div>
+        </div>
+
+        <div class="hud hud-bottom">
+          <div class="nitro-panel"><div><small>NITRO</small><strong id="boostValue">30%</strong></div><div class="nitro-bar"><i id="boostBar"></i></div></div>
+          <div class="race-callout" id="callout">PERFECT LINE +250</div>
+          <div class="combo" id="combo">RACE READY</div>
+        </div>
+
+        <div class="countdown" id="countdown">3</div>
+
+        <div class="touch-controls" aria-label="Touch controls">
+          <div><button data-action="left" aria-label="Move left">‹</button><button data-action="right" aria-label="Move right">›</button><button data-action="jump" aria-label="Jump">↑</button></div>
+          <button class="nitro-button" data-action="boost">NITRO</button>
+        </div>
+
+        <div class="result-screen" id="resultScreen" aria-hidden="true">
+          <p class="kicker">OFFICIAL RESULT</p>
+          <h2 id="resultScore">000,000</h2>
+          <p class="result-rider" id="resultRider">WGP RIDER</p>
+          <div class="result-stats"><div><small>CLEAN PASSES</small><strong id="resultPasses">0</strong></div><div><small>TOP SPEED</small><strong id="resultSpeed">0 KM/H</strong></div><div><small>POSITION</small><strong id="resultPosition">#1</strong></div></div>
+          <button class="primary-button" id="raceAgain">RACE AGAIN <span>↻</span></button>
+          <button class="secondary-button" id="backHome">BACK TO HOME</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="leaderboard-section" id="leaderboardSection">
+      <div><p class="kicker">LOCAL RESULTS</p><h2>TOP RIDERS</h2></div>
+      <div class="leaderboard" id="leaderboard"></div>
+    </section>
   </main>
-  <script>
-    const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d');
-    const $=s=>document.querySelector(s),W=canvas.width,H=canvas.height,lanes=[350,430,510],finishDistance=3000;
-    const ui={speed:$('#speed'),score:$('#score'),distance:$('#distance'),combo:$('#combo'),boostBar:$('#boostBar'),boostValue:$('#boostValue'),callout:$('#callout'),overlay:$('#overlay'),overlayBtn:$('#overlayBtn'),countdown:$('#countdown'),name:$('#playerName'),board:$('#leaderboard')};
-    let mode='menu',frame=0,last=performance.now(),distance=0,score=0,speed=96,boost=30,boosting=false,combo=0,shake=0,spawnClock=0,gateClock=0,calloutTimer=0,countValue=0,countTimer=0;
-    let objects=[],spray=[],streaks=[],board=JSON.parse(localStorage.getItem('wgp1_pro_board')||'[]');
-    const rider={lane:1,x:235,y:lanes[1],targetY:lanes[1],z:0,vz:0,tilt:0,invuln:0};
-    function safeName(){return(ui.name.value.trim().replace(/[^\p{L}\p{N} _-]/gu,'').slice(0,14)||'WGP RIDER').toUpperCase()}
-    function reset(){frame=0;distance=score=combo=shake=spawnClock=gateClock=0;speed=96;boost=30;boosting=false;objects=[];spray=[];streaks=[];rider.lane=1;rider.y=rider.targetY=lanes[1];rider.z=rider.vz=0;rider.invuln=0;updateUI()}
-    function start(){reset();mode='countdown';ui.overlay.classList.add('hidden');countValue=3;countTimer=0;showCount('3')}
-    function showCount(v){ui.countdown.textContent=v;ui.countdown.classList.remove('on');void ui.countdown.offsetWidth;ui.countdown.classList.add('on')}
-    function action(a,on=true){if(mode==='menu'||mode==='finished'){if(on&&(a==='jump'||a==='boost'))start();return}if(mode!=='racing')return;if(a==='left'&&on&&rider.lane>0){rider.lane--;rider.targetY=lanes[rider.lane]}if(a==='right'&&on&&rider.lane<2){rider.lane++;rider.targetY=lanes[rider.lane]}if(a==='jump'&&on&&rider.z===0){rider.vz=16.5}if(a==='boost')boosting=on}
-    function spawn(){const safe=Math.random()<.68;const lane=Math.floor(Math.random()*3);objects.push({type:safe?'buoy':'rival',lane,x:W+120,y:lanes[lane],w:safe?38:105,h:safe?62:48,passed:false,phase:Math.random()*6});if(distance>700&&Math.random()<.32){let second=(lane+1+Math.floor(Math.random()*2))%3;objects.push({type:'buoy',lane:second,x:W+120,y:lanes[second],w:38,h:62,passed:false,phase:0})}}
-    function spawnGate(){const lane=Math.floor(Math.random()*3);objects.push({type:'gate',lane,x:W+100,y:lanes[lane],w:84,h:100,passed:false,phase:0})}
-    function flash(text){ui.callout.textContent=text;ui.callout.classList.add('show');calloutTimer=80}
-    function finish(){mode='finished';boosting=false;const final=Math.floor(score);board.push({name:safeName(),score:final,time:Date.now()});board.sort((a,b)=>b.score-a.score||a.time-b.time);board=board.slice(0,8);localStorage.setItem('wgp1_pro_board',JSON.stringify(board));renderBoard();ui.overlay.querySelector('.eyebrow').textContent='OFFICIAL RESULT';ui.overlay.querySelector('h1').innerHTML=`${final.toLocaleString()} PTS <span>${safeName()}</span>`;ui.overlay.querySelector('p').textContent=`Course complete • ${combo} clean passes • Top speed ${Math.round(speed)} km/h`;ui.overlayBtn.textContent='RACE AGAIN';ui.overlay.classList.remove('hidden')}
-    function crash(){if(rider.invuln)return;rider.invuln=105;shake=18;speed=Math.max(72,speed-30);boost=Math.max(0,boost-22);combo=0;flash('CONTACT • SPEED LOST');for(let i=0;i<24;i++)spray.push({x:rider.x+10,y:rider.y-rider.z,vx:(Math.random()-.4)*9,vy:-Math.random()*8-2,r:2+Math.random()*6,life:35})}
-    function update(dt){frame++;if(mode==='countdown'){countTimer+=dt;if(countTimer>.72){countTimer=0;countValue--;if(countValue>0)showCount(countValue);else if(countValue===0)showCount('GO!');else mode='racing'}}
-      const moving=mode==='racing',usingBoost=moving&&boosting&&boost>0;speed+=(moving?((usingBoost?174:124)-speed)*.018:(96-speed)*.02)*dt*60;if(usingBoost)boost=Math.max(0,boost-.24*dt*60);else if(moving)boost=Math.min(100,boost+.035*dt*60);if(boost<=0)boosting=false;
-      if(moving){distance+=speed*.0082*dt*60;score+=speed*.0105*dt*60*(1+Math.min(combo,10)*.06);spawnClock+=dt*60;gateClock+=dt*60;const gap=Math.max(62,110-distance/42);if(spawnClock>gap){spawnClock=0;spawn()}if(gateClock>310){gateClock=0;spawnGate()}if(distance>=finishDistance)finish()}
-      rider.y+=(rider.targetY-rider.y)*.22*dt*60;if(rider.z>0||rider.vz>0){rider.vz-=1.05*dt*60;rider.z+=rider.vz*dt*60;if(rider.z<=0){rider.z=0;rider.vz=0;for(let i=0;i<10;i++)spray.push({x:rider.x,y:rider.y,vx:-Math.random()*6,vy:-Math.random()*4,r:2+Math.random()*4,life:24})}}rider.tilt+=(Math.sign(rider.targetY-rider.y)*.18-rider.tilt)*.14;if(rider.invuln>0)rider.invuln-=dt*60;
-      const scroll=speed*.105*dt*60;objects.forEach(o=>{o.x-=scroll;if(o.type==='rival')o.y=lanes[o.lane]+Math.sin(frame*.035+o.phase)*12;const same=Math.abs(rider.y-o.y)<36,close=o.x<rider.x+62&&o.x+o.w>rider.x-54;
-        if(mode==='racing'&&!o.passed&&o.x+o.w<rider.x-45){o.passed=true;if(o.type==='gate'&&same){score+=500;boost=Math.min(100,boost+28);combo++;flash('GATE PERFECT +500')}else if(o.type!=='gate'){if(Math.abs(rider.y-o.y)<86){score+=250;boost=Math.min(100,boost+10);combo++;flash('NEAR MISS +250')}else{score+=80;combo++}}}
-        if(mode==='racing'&&close&&same&&rider.z<38&&o.type!=='gate')crash()});objects=objects.filter(o=>o.x>-180);
-      if(moving&&frame%3===0){spray.push({x:rider.x-45,y:rider.y-rider.z+14,vx:-5-Math.random()*6,vy:-1-Math.random()*3,r:2+Math.random()*5,life:22});if(speed>140)streaks.push({x:W+10,y:210+Math.random()*330,w:60+Math.random()*150,life:12})}
-      spray.forEach(p=>{p.x+=p.vx*dt*60;p.y+=p.vy*dt*60;p.vy+=.25*dt*60;p.life-=dt*60});spray=spray.filter(p=>p.life>0);streaks.forEach(s=>{s.x-=28*dt*60;s.life-=dt*60});streaks=streaks.filter(s=>s.life>0);shake*=.82;if(calloutTimer>0){calloutTimer-=dt*60}else ui.callout.classList.remove('show');updateUI()}
-    function updateUI(){ui.speed.textContent=String(Math.round(speed)).padStart(3,'0');ui.score.textContent=String(Math.floor(score)).padStart(6,'0');ui.distance.textContent=(distance/1000).toFixed(2)+' KM';ui.combo.textContent=combo?`CLEAN LINE ×${combo}`:(mode==='racing'?'PUSH THE LIMIT':'RACE READY');ui.boostBar.style.width=boost+'%';ui.boostValue.textContent=Math.round(boost)+'%'}
-    function draw(){ctx.save();if(shake)ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);drawWorld();objects.sort((a,b)=>a.y-b.y).forEach(drawObject);drawRider();drawFX();ctx.restore()}
-    function drawWorld(){let sky=ctx.createLinearGradient(0,0,0,330);sky.addColorStop(0,'#071421');sky.addColorStop(.55,'#26627b');sky.addColorStop(1,'#d66b35');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);ctx.fillStyle='#ffb25f';ctx.beginPath();ctx.arc(935,128,51,0,7);ctx.fill();let glow=ctx.createRadialGradient(935,128,20,935,128,160);glow.addColorStop(0,'rgba(255,127,55,.35)');glow.addColorStop(1,'transparent');ctx.fillStyle=glow;ctx.fillRect(760,0,350,300);
-      ctx.fillStyle='#07131b';ctx.beginPath();ctx.moveTo(0,250);for(let x=0;x<=W;x+=45)ctx.lineTo(x,225+Math.sin(x*.017)*20+Math.sin(x*.043)*9);ctx.lineTo(W,330);ctx.lineTo(0,330);ctx.fill();
-      const sea=ctx.createLinearGradient(0,260,0,H);sea.addColorStop(0,'#245b72');sea.addColorStop(.45,'#0a354d');sea.addColorStop(1,'#041923');ctx.fillStyle=sea;ctx.fillRect(0,260,W,H-260);ctx.strokeStyle='rgba(150,223,238,.24)';ctx.lineWidth=2;for(let i=0;i<16;i++){let y=280+i*24;ctx.beginPath();for(let x=0;x<=W;x+=20){let yy=y+Math.sin(x*.021+frame*.045+i)*5;if(x===0)ctx.moveTo(x,yy);else ctx.lineTo(x,yy)}ctx.stroke()}
-      ctx.fillStyle='rgba(255,255,255,.04)';ctx.fillRect(0,lanes[0]-46,W,92);ctx.fillRect(0,lanes[2]-46,W,92);ctx.setLineDash([18,20]);ctx.strokeStyle='rgba(255,255,255,.14)';[390,470].forEach(y=>{ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()});ctx.setLineDash([]);ctx.fillStyle='rgba(255,255,255,.7)';ctx.font='800 13px Inter';ctx.fillText('WGP#1 • WORLD SERIES • PATTAYA',24,296)}
-    function drawObject(o){ctx.save();ctx.translate(o.x,o.y);if(o.type==='buoy'){ctx.fillStyle='rgba(255,255,255,.35)';ctx.beginPath();ctx.ellipse(0,25,26,7,0,0,7);ctx.fill();ctx.fillStyle='#ff5a00';ctx.beginPath();ctx.moveTo(0,-35);ctx.lineTo(21,20);ctx.lineTo(-21,20);ctx.closePath();ctx.fill();ctx.fillStyle='#fff';ctx.fillRect(-16,-3,32,7)}else if(o.type==='rival'){ctx.fillStyle='rgba(255,255,255,.34)';ctx.beginPath();ctx.ellipse(-25,18,48,9,0,0,7);ctx.fill();ctx.fillStyle='#cbd9df';ctx.beginPath();ctx.moveTo(-48,5);ctx.lineTo(-18,-17);ctx.lineTo(46,-11);ctx.lineTo(54,1);ctx.lineTo(30,15);ctx.lineTo(-32,15);ctx.fill();ctx.fillStyle='#192630';ctx.fillRect(-4,-24,27,12);ctx.fillStyle='#38d0ee';ctx.fillRect(28,-8,15,5)}else{ctx.strokeStyle='rgba(44,232,255,.85)';ctx.lineWidth=8;ctx.shadowColor='#2ce8ff';ctx.shadowBlur=18;ctx.beginPath();ctx.arc(0,-8,42,Math.PI*.15,Math.PI*.85,true);ctx.stroke();ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.font='800 11px Inter';ctx.textAlign='center';ctx.fillText('BOOST GATE',0,38)}ctx.restore()}
-    function drawRider(){ctx.save();ctx.translate(rider.x,rider.y-rider.z);ctx.rotate(rider.tilt);if(rider.invuln&&Math.floor(rider.invuln/6)%2){ctx.globalAlpha=.35}ctx.fillStyle='rgba(255,255,255,.45)';ctx.beginPath();ctx.ellipse(-34,20,58,11,0,0,7);ctx.fill();ctx.fillStyle='#ff5a00';ctx.beginPath();ctx.moveTo(-62,8);ctx.lineTo(-25,-21);ctx.lineTo(45,-15);ctx.lineTo(64,-1);ctx.lineTo(36,18);ctx.lineTo(-40,19);ctx.closePath();ctx.fill();ctx.fillStyle='#071018';ctx.beginPath();ctx.moveTo(-17,-19);ctx.lineTo(6,-35);ctx.lineTo(40,-28);ctx.lineTo(34,-13);ctx.closePath();ctx.fill();ctx.fillStyle='#fff';ctx.font='900 italic 15px Barlow Condensed';ctx.fillText('WGP#1',-31,8);ctx.fillStyle='#0a1117';ctx.beginPath();ctx.arc(-14,-53,12,0,7);ctx.fill();ctx.strokeStyle='#f5f8fa';ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(-11,-40);ctx.lineTo(5,-20);ctx.lineTo(21,-39);ctx.stroke();if(boosting&&boost>0){ctx.strokeStyle='#ffba35';ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(-64,3);ctx.lineTo(-118,3);ctx.stroke()}ctx.restore()}
-    function drawFX(){streaks.forEach(s=>{ctx.globalAlpha=s.life/12;ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(s.x+s.w,s.y);ctx.stroke()});ctx.globalAlpha=1;spray.forEach(p=>{ctx.globalAlpha=Math.max(0,p.life/35);ctx.fillStyle='#d8f7ff';ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill()});ctx.globalAlpha=1;if(boosting&&boost>0){ctx.fillStyle='rgba(255,90,0,.08)';ctx.fillRect(0,0,W,H)}}
-    function renderBoard(){ui.board.innerHTML=board.length?board.slice(0,5).map((r,i)=>`<tr class="${i===0?'champ':''}"><td>${String(i+1).padStart(2,'0')}</td><td>${r.name.replace(/[<>&]/g,'')}</td><td>${r.score.toLocaleString()}</td></tr>`).join(''):'<tr><td>—</td><td>NO RESULT</td><td>000</td></tr>'}
-    function loop(now){const dt=Math.min(.033,(now-last)/1000);last=now;update(dt);draw();requestAnimationFrame(loop)}
-    const map={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'jump',Space:'jump',ShiftLeft:'boost',ShiftRight:'boost'};addEventListener('keydown',e=>{if(map[e.code]){e.preventDefault();action(map[e.code],true)}if(e.code==='KeyR')start()});addEventListener('keyup',e=>{if(map[e.code]==='boost')action('boost',false)});
-    document.querySelectorAll('[data-action]').forEach(b=>{const a=b.dataset.action;b.addEventListener('pointerdown',e=>{e.preventDefault();action(a,true)});b.addEventListener('pointerup',()=>action(a,false));b.addEventListener('pointercancel',()=>action(a,false))});
-    $('#startBtn').onclick=start;ui.overlayBtn.onclick=start;$('#clearBtn').onclick=()=>{board=[];localStorage.removeItem('wgp1_pro_board');renderBoard()};renderBoard();requestAnimationFrame(loop);
-  </script>
+  <script src="game.js"></script>
 </body>
 </html>
