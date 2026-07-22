@@ -1,0 +1,132 @@
+:root{--orange:#ff5b00;--orange-2:#ff8a00;--ink:#05070a;--panel:#0a1016;--muted:#8b9aa6;--line:rgba(255,255,255,.13);--white:#f7fafc}
+
+*{box-sizing:border-box}
+html{background:var(--ink);color:var(--white);font-family:Inter,Arial,sans-serif}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at 75% 10%,#193444 0,transparent 38%),var(--ink)}
+button,input{font:inherit}
+.app{min-height:100vh;overflow:hidden}
+.topbar{height:82px;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(20px,4vw,64px);border-bottom:1px solid var(--line);position:relative;z-index:10}
+.brand{display:flex;align-items:center;gap:18px;color:#fff;text-decoration:none}
+.wordmark{font:900 italic 38px/1 "Barlow Condensed",sans-serif;letter-spacing:-1.5px}
+.wordmark span{color:var(--orange)}
+.brand-copy{border-left:1px solid var(--line);padding-left:18px;color:#82929e;font-size:10px;font-weight:800;line-height:1.45;letter-spacing:2.1px}
+.event-status{display:flex;align-items:center;gap:10px;color:#a5b2ba;font-size:10px;font-weight:800;letter-spacing:2px}
+.event-status i{width:8px;height:8px;border-radius:50%;background:var(--orange);box-shadow:0 0 18px var(--orange);animation:pulse 1.4s infinite}
+@keyframes pulse{50%{opacity:.3}
+}
+
+.hero{min-height:calc(100vh - 82px);display:grid;grid-template-columns:minmax(0,1.35fr) minmax(320px,.65fr);align-items:center;gap:8vw;padding:7vh clamp(20px,7vw,110px);position:relative}
+.hero:before{content:"";position:absolute;inset:0;background:linear-gradient(100deg,rgba(5,7,10,.08),rgba(5,7,10,.9)),repeating-linear-gradient(168deg,transparent 0 38px,rgba(255,255,255,.018) 39px 40px);pointer-events:none}
+.hero:after{content:"01";position:absolute;left:-2vw;bottom:-13vh;font:900 italic min(31vw,460px)/1 "Barlow Condensed";color:rgba(255,255,255,.025);pointer-events:none}
+.hero-copy,.entry-card{position:relative;z-index:1}
+.kicker{color:var(--orange);font-size:10px;font-weight:900;letter-spacing:4px;margin:0 0 18px}
+.hero h1{font:900 italic clamp(76px,11vw,176px)/.72 "Barlow Condensed";letter-spacing:-.045em;margin:0;text-transform:uppercase}
+.hero h1 em{color:transparent;-webkit-text-stroke:1.5px rgba(255,255,255,.7);font-style:italic}
+.intro{max-width:610px;color:#9eafb9;font-size:14px;line-height:1.85;margin:38px 0 30px}
+.race-specs{display:flex;border-top:1px solid var(--line);max-width:680px}
+.race-specs div{min-width:150px;padding:18px 30px 0 0}
+.race-specs small,.result-stats small{display:block;color:#667783;font-size:9px;font-weight:800;letter-spacing:1.8px;margin-bottom:7px}
+.race-specs strong{font:800 17px "Barlow Condensed";letter-spacing:.5px}
+.entry-card{padding:clamp(28px,4vw,52px);background:linear-gradient(145deg,rgba(16,25,33,.98),rgba(7,10,14,.98));border:1px solid var(--line);box-shadow:0 40px 90px rgba(0,0,0,.45)}
+.step{margin:0;color:#758691;font-size:9px;font-weight:800;letter-spacing:2px}
+.entry-card h2{font:900 italic 46px/.84 "Barlow Condensed";margin:20px 0 36px}
+.entry-card label{display:block;color:#82919b;font-size:9px;font-weight:900;letter-spacing:2px;margin-bottom:9px}
+.entry-card input{width:100%;height:54px;padding:0 16px;background:#05080c;border:1px solid #26313a;color:#fff;font-weight:800;text-transform:uppercase;outline:0}
+.entry-card input:focus{border-color:var(--orange)}
+.primary-button{width:100%;border:0;background:linear-gradient(105deg,var(--orange),var(--orange-2));color:#fff;padding:17px 20px;margin-top:13px;display:flex;justify-content:space-between;align-items:center;font:900 italic 17px "Barlow Condensed";letter-spacing:1.2px;cursor:pointer;transition:.2s}
+.primary-button:hover{filter:brightness(1.13);transform:translateY(-2px)}
+.controls-preview{display:grid;grid-template-columns:1.2fr .8fr 1fr;gap:8px;margin-top:24px}
+.controls-preview p{margin:0;color:#748591;font-size:8px;font-weight:800}
+.controls-preview span{display:block;margin-top:8px}
+.controls-preview kbd{display:inline-grid;place-items:center;min-width:25px;height:23px;margin-right:3px;padding:0 5px;border:1px solid #37444d;background:#111920;color:#fff;font:700 9px Inter}
+
+.race-screen{display:none;position:fixed;inset:0;background:#020407;z-index:20}
+.race-screen.active{display:grid;place-items:center}
+.race-frame{width:100vw;height:100vh;position:relative;overflow:hidden}
+.race-frame canvas{width:100%;height:100%;display:block;object-fit:cover;touch-action:none}
+.hud{position:absolute;left:clamp(16px,3vw,50px);right:clamp(16px,3vw,50px);display:flex;pointer-events:none;text-shadow:0 3px 15px #000}
+.hud-top{top:clamp(18px,3vw,45px);align-items:flex-start}
+.hud-block{padding:7px 18px 9px;border-left:3px solid var(--orange);background:linear-gradient(90deg,rgba(3,6,9,.88),rgba(3,6,9,.15));min-width:145px}
+.hud small{display:block;color:#a0b0ba;font-size:8px;font-weight:800;letter-spacing:2px}
+.hud-block strong{font:900 39px/.92 "Barlow Condensed"}
+.hud-block span{font-size:9px;color:#b0bdc5}
+.score-block{margin-left:8px;border-left-color:#fff}
+.course-block{width:min(330px,34vw);margin-left:auto;text-align:right}
+.course-block strong{display:block;font:800 24px "Barlow Condensed";margin:5px 0}
+.progress{height:4px;background:rgba(255,255,255,.18)}
+.progress i{display:block;width:0;height:100%;background:var(--orange);box-shadow:0 0 13px var(--orange)}
+.hud-bottom{bottom:clamp(20px,3vw,45px);align-items:flex-end}
+.nitro-panel{width:min(300px,32vw)}
+.nitro-panel>div:first-child{display:flex;justify-content:space-between;align-items:end;margin-bottom:6px}
+.nitro-panel strong{font:800 17px "Barlow Condensed"}
+.nitro-bar{height:9px;background:rgba(255,255,255,.17);transform:skewX(-16deg);overflow:hidden}
+.nitro-bar i{display:block;width:30%;height:100%;background:linear-gradient(90deg,var(--orange),#ffd15b);box-shadow:0 0 18px var(--orange)}
+.race-callout{opacity:0;margin-left:24px;color:#fff;font:900 italic 27px "Barlow Condensed";letter-spacing:1px;transform:translateY(8px);transition:.2s}
+.race-callout.show{opacity:1;transform:none}
+.combo{margin-left:auto;color:#fff;font:900 italic 18px "Barlow Condensed";letter-spacing:1px}
+.countdown{position:absolute;inset:0;display:grid;place-items:center;opacity:0;pointer-events:none;font:900 italic clamp(100px,18vw,260px)/1 "Barlow Condensed";text-shadow:0 10px 50px #000}
+.countdown.on{animation:count .62s ease}
+@keyframes count{0%{opacity:0;transform:scale(1.5)}
+25%{opacity:1}
+100%{opacity:0;transform:scale(.75)}
+}
+.touch-controls{display:none;position:absolute;left:16px;right:16px;bottom:72px;justify-content:space-between;pointer-events:none}
+.touch-controls button{pointer-events:auto;width:58px;height:58px;margin-right:6px;border:1px solid rgba(255,255,255,.35);border-radius:50%;background:rgba(3,7,10,.62);color:#fff;font-size:24px;backdrop-filter:blur(7px);touch-action:manipulation}
+.touch-controls .nitro-button{width:78px;border-radius:30px;background:rgba(255,91,0,.82);font-size:11px;font-weight:900}
+.result-screen{position:absolute;inset:0;display:none;place-items:center;align-content:center;padding:25px;text-align:center;background:radial-gradient(circle,rgba(8,22,31,.65),rgba(2,4,7,.96));z-index:5}
+.result-screen.active{display:grid}
+.result-screen h2{font:900 italic clamp(76px,12vw,150px)/.8 "Barlow Condensed";margin:5px 0;color:#fff}
+.result-rider{font:900 italic 28px "Barlow Condensed";color:var(--orange);margin:12px 0 28px}
+.result-stats{display:grid;grid-template-columns:repeat(3,130px);border:1px solid var(--line);margin-bottom:18px}
+.result-stats div{padding:14px;border-right:1px solid var(--line)}
+.result-stats div:last-child{border:0}
+.result-stats strong{font:800 19px "Barlow Condensed"}
+.result-screen .primary-button{max-width:390px;margin-inline:auto}
+.secondary-button{border:0;background:transparent;color:#8596a1;padding:13px;font-size:9px;font-weight:800;letter-spacing:2px;cursor:pointer}
+
+.leaderboard-section{padding:75px clamp(20px,7vw,110px);display:grid;grid-template-columns:280px 1fr;gap:70px;border-top:1px solid var(--line);background:#070a0e}
+.leaderboard-section h2{font:900 italic 50px/.9 "Barlow Condensed";margin:0}
+.leaderboard{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line)}
+.leader-entry{padding:18px 15px;border-right:1px solid var(--line)}
+.leader-entry small{display:block;color:#667783;font:800 10px Inter;margin-bottom:15px}
+.leader-entry strong{display:block;font:800 19px "Barlow Condensed";white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.leader-entry span{display:block;color:var(--orange);font:800 25px "Barlow Condensed";margin-top:5px}
+.leader-empty{grid-column:1/-1;color:#667783;padding:25px 0;font-size:11px;letter-spacing:2px}
+
+@media(max-width:900px){.hero{grid-template-columns:1fr;gap:50px;padding-top:55px}
+.hero-copy{max-width:720px}
+.entry-card{max-width:600px;width:100%}
+.leaderboard-section{grid-template-columns:1fr;gap:30px}
+.leaderboard{grid-template-columns:repeat(3,1fr)}
+.leader-entry:nth-child(n+4){display:none}
+}
+
+@media(max-width:650px){.topbar{height:62px;padding:0 15px}
+.wordmark{font-size:30px}
+.brand-copy,.event-status span{display:none}
+.hero{min-height:calc(100vh - 62px);padding:44px 17px}
+.hero h1{font-size:70px}
+.intro{font-size:12px;margin:28px 0 20px}
+.race-specs{justify-content:space-between}
+.race-specs div{min-width:0;padding-right:8px}
+.entry-card{padding:28px 22px}
+.controls-preview{display:none}
+.leaderboard-section{padding:50px 18px}
+.leaderboard{grid-template-columns:1fr}
+.leader-entry{display:flex!important;align-items:center;justify-content:space-between;border-right:0;border-bottom:1px solid var(--line)}
+.leader-entry small{margin:0}
+.leader-entry span{margin:0}
+.hud-block{min-width:92px;padding:5px 8px}
+.hud-block strong{font-size:25px}
+.score-block{display:none}
+.course-block{width:47vw}
+.course-block strong{font-size:17px}
+.hud-bottom{bottom:14px}
+.nitro-panel{width:165px}
+.race-callout{position:absolute;left:0;bottom:38px;font-size:19px;margin:0}
+.combo{font-size:14px}
+.touch-controls{display:flex}
+.result-stats{grid-template-columns:repeat(3,1fr);width:100%;max-width:390px}
+.result-stats div{padding:11px 4px}
+.result-stats strong{font-size:15px}
+}
