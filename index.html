@@ -25,10 +25,10 @@
       <div class="hero-copy">
         <p class="kicker">WGP#1 DIGITAL RACE EXPERIENCE</p>
         <h1>OWN<br><em>THE WATER.</em></h1>
-        <p class="intro">เข้าไลน์ให้แม่น หลบคู่แข่ง และเลือกใช้ Nitro ให้ถูกจังหวะ เพื่อทำคะแนนสูงสุดบนสนาม Time Attack ระยะ 3 กิโลเมตร</p>
+        <p class="intro">เลือกโหมดและระยะทางที่ต้องการ เข้าเลนให้แม่น หลบคู่แข่ง และใช้ Nitro ให้ถูกจังหวะ เพื่อสร้างสถิติของคุณบนสนาม WGP#1</p>
         <div class="race-specs" aria-label="Race information">
-          <div><small>FORMAT</small><strong>TIME ATTACK</strong></div>
-          <div><small>DISTANCE</small><strong>3.00 KM</strong></div>
+          <div><small>FORMAT</small><strong>3 RACE MODES</strong></div>
+          <div><small>DISTANCE</small><strong>1 / 3 / 5 KM</strong></div>
           <div><small>DIFFICULTY</small><strong>PRO</strong></div>
         </div>
       </div>
@@ -38,10 +38,26 @@
         <h2>RIDER<br>REGISTRATION</h2>
         <label for="playerName">RIDER NAME</label>
         <input id="playerName" maxlength="14" value="WGP RIDER" autocomplete="off" spellcheck="false">
+        <fieldset class="race-options">
+          <legend>RACE MODE</legend>
+          <div class="option-grid mode-options">
+            <label><input type="radio" name="raceMode" value="time" checked><span><strong>TIME ATTACK</strong><small>สมดุลความเร็วและคะแนน</small></span></label>
+            <label><input type="radio" name="raceMode" value="sprint"><span><strong>SPRINT</strong><small>เร็วขึ้น อุปสรรคน้อยลง</small></span></label>
+            <label><input type="radio" name="raceMode" value="precision"><span><strong>PRECISION</strong><small>เลนแคบและอุปสรรคมากขึ้น</small></span></label>
+          </div>
+        </fieldset>
+        <fieldset class="race-options distance-options">
+          <legend>COURSE DISTANCE</legend>
+          <div class="option-grid">
+            <label><input type="radio" name="raceDistance" value="1000"><span><strong>1 KM</strong><small>QUICK</small></span></label>
+            <label><input type="radio" name="raceDistance" value="3000" checked><span><strong>3 KM</strong><small>STANDARD</small></span></label>
+            <label><input type="radio" name="raceDistance" value="5000"><span><strong>5 KM</strong><small>ENDURANCE</small></span></label>
+          </div>
+        </fieldset>
         <button class="primary-button" id="enterRace">START RACE <span>→</span></button>
         <div class="controls-preview">
-          <p><kbd>←</kbd><kbd>→</kbd><span>CHANGE LINE</span></p>
-          <p><kbd>↑</kbd><span>JUMP</span></p>
+          <p><kbd>↑</kbd><kbd>↓</kbd><span>CHANGE LANE</span></p>
+          <p><kbd>SPACE</kbd><span>JUMP</span></p>
           <p><kbd>SHIFT</kbd><span>NITRO</span></p>
         </div>
       </div>
@@ -62,6 +78,8 @@
           <div class="course-block"><small>COURSE PROGRESS</small><strong id="distance">0.00 / 3.00 KM</strong><div class="progress"><i id="courseBar"></i></div></div>
         </div>
 
+        <div class="lane-indicator" id="laneIndicator" aria-live="polite"><small>CURRENT LANE</small><strong>2 / 3</strong></div>
+
         <div class="hud hud-bottom">
           <div class="nitro-panel"><div><small>NITRO</small><strong id="boostValue">30%</strong></div><div class="nitro-bar"><i id="boostBar"></i></div></div>
           <div class="race-callout" id="callout">PERFECT LINE +250</div>
@@ -72,8 +90,8 @@
 
         <div class="touch-controls" aria-label="Touch controls">
           <div class="control-cluster steering-controls">
-            <button data-action="left" aria-label="Move left">‹</button>
-            <button data-action="right" aria-label="Move right">›</button>
+            <button data-action="lane-up" aria-label="Move to upper lane"><span>↑</span><small>LANE UP</small></button>
+            <button data-action="lane-down" aria-label="Move to lower lane"><span>↓</span><small>LANE DOWN</small></button>
           </div>
           <div class="control-cluster action-controls">
             <button class="jump-button" data-action="jump" aria-label="Jump"><span>↑</span><small>JUMP</small></button>
