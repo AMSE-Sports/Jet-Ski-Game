@@ -1,4 +1,8 @@
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.min.js";
+import * as THREE from "three";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -37,12 +41,26 @@ const ui = {
   finalPosition: $("#finalPosition"),
   webglNotice: $("#webglNotice"),
   cinematicFx: $("#cinematicFx"),
+  grip: $("#gripValue"),
+  gForce: $("#gForceValue"),
+  surface: $("#surfaceValue"),
+  turnCue: $("#turnCue"),
+  turnArrow: $("#turnArrow"),
+  turnLabel: $("#turnLabel"),
+  radar: $("#radarRivals"),
+  sound: $("#soundToggle"),
 };
 
 const config = {
-  time: { label: "TIME ATTACK", cruise: 132, max: 184, gates: 1, hazards: 1 },
-  sprint: { label: "SPRINT", cruise: 152, max: 208, gates: .7, hazards: .65 },
-  precision: { label: "PRECISION", cruise: 116, max: 168, gates: 1.35, hazards: 1.4 },
+  time: {
+    label: "TIME ATTACK", cruise: 118, max: 154, acceleration: 1.02, gates: 1, hazards: .95,
+  },
+  sprint: {
+    label: "SPRINT", cruise: 132, max: 170, acceleration: 1.08, gates: .75, hazards: .72,
+  },
+  precision: {
+    label: "PRECISION", cruise: 101, max: 138, acceleration: .96, gates: 1.35, hazards: 1.35,
+  },
 };
 
 const riderProfiles = {
@@ -54,8 +72,10 @@ const riderProfiles = {
     accent: "#ffc444",
     skin: "#d9a073",
     handling: .96,
-    boost: 1.1,
-    stability: .94,
+    boost: 1.05,
+    stability: .96,
+    acceleration: 1.06,
+    topSpeed: 1.012,
   },
   nova: {
     name: "NOVA KAI",
@@ -67,6 +87,8 @@ const riderProfiles = {
     handling: 1.08,
     boost: 1,
     stability: 1,
+    acceleration: 1,
+    topSpeed: 1,
   },
   tide: {
     name: "TIDE VEGA",
@@ -76,26 +98,51 @@ const riderProfiles = {
     accent: "#657bff",
     skin: "#e3b894",
     handling: 1.02,
-    boost: .95,
-    stability: 1.12,
+    boost: .97,
+    stability: 1.08,
+    acceleration: .97,
+    topSpeed: .992,
   },
 };
 
 const aiLevels = {
-  sport: { label: "SPORT", pace: .94, reaction: .82, attack: .72 },
-  pro: { label: "PRO", pace: 1.015, reaction: 1, attack: 1 },
-  elite: { label: "WORLD CLASS", pace: 1.06, reaction: 1.16, attack: 1.18 },
+  sport: {
+    label: "SPORT", pace: .945, reaction: .76, attack: .72, consistency: .91, errorRate: .052,
+  },
+  pro: {
+    label: "PRO", pace: .995, reaction: 1, attack: 1, consistency: .965, errorRate: .02,
+  },
+  elite: {
+    label: "WORLD CLASS", pace: 1.025, reaction: 1.18, attack: 1.12, consistency: .992, errorRate: .005,
+  },
 };
 
 const rivalProfiles = [
-  { name: "MIRA STORM", primary: "#1769e8", secondary: "#f5f7f9", suit: "#16263f", accent: "#5be8ff", skin: "#c88762", skill: .99, aggression: .72 },
-  { name: "RYO VOLT", primary: "#ffd21a", secondary: "#15191f", suit: "#222630", accent: "#fff1a6", skin: "#d1a17c", skill: 1.035, aggression: .82 },
-  { name: "LUCA WAVE", primary: "#e82947", secondary: "#f1f2f4", suit: "#253044", accent: "#ff8b9e", skin: "#b97855", skill: 1.01, aggression: .68 },
-  { name: "KAI PHANTOM", primary: "#915cff", secondary: "#151422", suit: "#e8e6f2", accent: "#c6a8ff", skin: "#e0ad82", skill: 1.055, aggression: .9 },
-  { name: "AYA SURGE", primary: "#19d592", secondary: "#08231d", suit: "#152d2a", accent: "#a6ffe0", skin: "#c98b66", skill: 1.025, aggression: .77 },
+  {
+    name: "MIRA STORM", primary: "#1769e8", secondary: "#f5f7f9", suit: "#16263f", accent: "#5be8ff", skin: "#c88762",
+    skill: .995, aggression: .72, cornering: 1.04, launch: .98, boost: .97, defense: .88,
+  },
+  {
+    name: "RYO VOLT", primary: "#ffd21a", secondary: "#15191f", suit: "#222630", accent: "#fff1a6", skin: "#d1a17c",
+    skill: 1.012, aggression: .84, cornering: .97, launch: 1.06, boost: 1.04, defense: .96,
+  },
+  {
+    name: "LUCA WAVE", primary: "#e82947", secondary: "#f1f2f4", suit: "#253044", accent: "#ff8b9e", skin: "#b97855",
+    skill: 1.002, aggression: .66, cornering: 1.02, launch: 1, boost: 1, defense: .84,
+  },
+  {
+    name: "KAI PHANTOM", primary: "#915cff", secondary: "#151422", suit: "#e8e6f2", accent: "#c6a8ff", skin: "#e0ad82",
+    skill: 1.022, aggression: .91, cornering: 1.01, launch: 1.02, boost: 1.06, defense: 1.06,
+  },
+  {
+    name: "AYA SURGE", primary: "#19d592", secondary: "#08231d", suit: "#152d2a", accent: "#a6ffe0", skin: "#c98b66",
+    skill: 1.008, aggression: .77, cornering: 1.06, launch: .97, boost: .98, defense: .94,
+  },
 ];
 
 const WORLD_SCALE = .3312;
+const TRACK_HALF_WIDTH = 8.35;
+const GRAVITY = 9.81;
 
 const state = {
   phase: "menu",
@@ -112,6 +159,18 @@ const state = {
   steer: 0,
   x: 0,
   vx: 0,
+  yaw: 0,
+  grip: 1,
+  gForce: 0,
+  vertical: .17,
+  verticalVelocity: 0,
+  airborne: false,
+  landingCooldown: 0,
+  throttleLoad: 0,
+  slipstream: 0,
+  curve: 0,
+  surfaceChop: 0,
+  raceSeed: 108,
   score: 0,
   gates: 0,
   totalGates: 0,
@@ -121,12 +180,15 @@ const state = {
   shake: 0,
   impact: 0,
   splash: 0,
+  muted: false,
   paused: false,
   highQuality: true,
   keys: { left: false, right: false, brake: false, nitro: false },
 };
 
 let renderer;
+let composer;
+let bloomPass;
 let scene;
 let camera;
 let clock;
@@ -155,6 +217,8 @@ let nextRivalWake = 0;
 let standingsTimer = 0;
 let positionFxTimer = 0;
 let menuTime = 0;
+let audioEngine;
+let radarDots = [];
 
 function supportsWebGL() {
   try {
@@ -175,6 +239,181 @@ function mesh(geometry, material, cast = true, receive = true) {
   item.castShadow = cast;
   item.receiveShadow = receive;
   return item;
+}
+
+function hash(value) {
+  return Math.abs(Math.sin(value * 12.9898 + state.raceSeed * 0.731) * 43758.5453) % 1;
+}
+
+function courseCenter(distance) {
+  const d = Math.max(0, distance);
+  return Math.sin(d / 104) * 3.55
+    + Math.sin(d / 247 + .82) * 2.25
+    + Math.sin(d / 49 + .3) * .72;
+}
+
+function courseHeading(distance) {
+  return (courseCenter(distance + 3) - courseCenter(distance - 3)) / 6;
+}
+
+function courseTurn(distance) {
+  const before = courseHeading(distance - 14);
+  const after = courseHeading(distance + 14);
+  return clamp((after - before) * 25, -1, 1);
+}
+
+function racingLine(distance, skill = 1) {
+  const approach = courseTurn(distance + 24);
+  const apex = courseTurn(distance + 7);
+  return clamp((-approach * 1.45 + apex * 2.65) * skill, -3.85, 3.85);
+}
+
+function waterSample(x, distance, time = state.elapsed) {
+  const longWave = Math.sin(distance * .071 - time * 2.05 + x * .055) * .105;
+  const crossWave = Math.sin(distance * .127 + time * 2.75 - x * .21) * .052;
+  const chop = Math.sin(distance * .31 - time * 4.1 + x * .43) * .024;
+  const swell = Math.sin(distance * .024 + time * .72) * .07;
+  return longWave + crossWave + chop + swell;
+}
+
+function waterSlope(x, distance) {
+  const sample = .42;
+  return (waterSample(x, distance + sample) - waterSample(x, distance - sample)) / (sample * 2);
+}
+
+function createEnvironmentMap() {
+  const faces = Array.from({ length: 6 }, (_, index) => {
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = 256;
+    const context = canvas.getContext("2d");
+    const gradient = context.createLinearGradient(0, 0, 0, 256);
+    if (index === 2) {
+      gradient.addColorStop(0, "#176fa6");
+      gradient.addColorStop(.72, "#7cc9df");
+      gradient.addColorStop(1, "#e8d5a7");
+    } else if (index === 3) {
+      gradient.addColorStop(0, "#073d58");
+      gradient.addColorStop(1, "#0c7891");
+    } else {
+      gradient.addColorStop(0, "#0d6f9f");
+      gradient.addColorStop(.53, "#79c6dd");
+      gradient.addColorStop(.58, "#f4d8a4");
+      gradient.addColorStop(1, "#0b627b");
+    }
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, 256, 256);
+    if (index !== 3) {
+      const glow = context.createRadialGradient(62, 54, 1, 62, 54, 54);
+      glow.addColorStop(0, "rgba(255,255,232,.92)");
+      glow.addColorStop(.12, "rgba(255,225,154,.66)");
+      glow.addColorStop(1, "rgba(255,190,83,0)");
+      context.fillStyle = glow;
+      context.fillRect(0, 0, 256, 256);
+    }
+    return canvas;
+  });
+  const environment = new THREE.CubeTexture(faces);
+  environment.colorSpace = THREE.SRGBColorSpace;
+  environment.needsUpdate = true;
+  scene.environment = environment;
+}
+
+function initializeAudio() {
+  if (audioEngine) {
+    if (audioEngine.context.state === "suspended") audioEngine.context.resume();
+    return;
+  }
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContext) return;
+  const context = new AudioContext();
+  const master = context.createGain();
+  const compressor = context.createDynamicsCompressor();
+  compressor.threshold.value = -18;
+  compressor.knee.value = 18;
+  compressor.ratio.value = 5;
+  compressor.attack.value = .006;
+  compressor.release.value = .18;
+  master.gain.value = state.muted ? 0 : .58;
+  master.connect(compressor).connect(context.destination);
+
+  const engineFilter = context.createBiquadFilter();
+  engineFilter.type = "lowpass";
+  engineFilter.frequency.value = 1050;
+  engineFilter.Q.value = 1.4;
+  const engineGain = context.createGain();
+  engineGain.gain.value = .0001;
+  engineFilter.connect(engineGain).connect(master);
+
+  const low = context.createOscillator();
+  low.type = "sawtooth";
+  low.frequency.value = 45;
+  const high = context.createOscillator();
+  high.type = "triangle";
+  high.frequency.value = 92;
+  const lowGain = context.createGain();
+  const highGain = context.createGain();
+  lowGain.gain.value = .68;
+  highGain.gain.value = .34;
+  low.connect(lowGain).connect(engineFilter);
+  high.connect(highGain).connect(engineFilter);
+  low.start();
+  high.start();
+
+  const seconds = 2;
+  const buffer = context.createBuffer(1, context.sampleRate * seconds, context.sampleRate);
+  const channel = buffer.getChannelData(0);
+  let previous = 0;
+  for (let i = 0; i < channel.length; i += 1) {
+    const white = Math.random() * 2 - 1;
+    previous = previous * .91 + white * .09;
+    channel[i] = previous;
+  }
+  const wind = context.createBufferSource();
+  wind.buffer = buffer;
+  wind.loop = true;
+  const windFilter = context.createBiquadFilter();
+  windFilter.type = "bandpass";
+  windFilter.frequency.value = 850;
+  windFilter.Q.value = .55;
+  const windGain = context.createGain();
+  windGain.gain.value = .0001;
+  wind.connect(windFilter).connect(windGain).connect(master);
+  wind.start();
+
+  audioEngine = {
+    context, master, engineGain, engineFilter, low, high, windFilter, windGain,
+  };
+}
+
+function updateAudio() {
+  if (!audioEngine) return;
+  const {
+    context, engineGain, engineFilter, low, high, windFilter, windGain,
+  } = audioEngine;
+  const now = context.currentTime;
+  const speedRatio = clamp(state.speed / config[state.mode].max, 0, 1.12);
+  const load = state.phase === "racing" ? .42 + speedRatio * .58 : .06;
+  low.frequency.setTargetAtTime(42 + speedRatio * 118 + state.throttleLoad * 18, now, .045);
+  high.frequency.setTargetAtTime(86 + speedRatio * 244 + (state.boosting ? 52 : 0), now, .04);
+  engineFilter.frequency.setTargetAtTime(640 + speedRatio * 1900, now, .055);
+  engineGain.gain.setTargetAtTime(load * (state.muted ? 0 : .14), now, .06);
+  windFilter.frequency.setTargetAtTime(520 + speedRatio * 1550, now, .08);
+  windGain.gain.setTargetAtTime(speedRatio * speedRatio * (state.muted ? 0 : .11), now, .1);
+}
+
+function playImpact(intensity = 1) {
+  if (!audioEngine || state.muted) return;
+  const { context, master } = audioEngine;
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+  oscillator.type = "sine";
+  oscillator.frequency.setValueAtTime(115 + intensity * 45, context.currentTime);
+  oscillator.frequency.exponentialRampToValueAtTime(36, context.currentTime + .18);
+  gain.gain.setValueAtTime(.16 * intensity, context.currentTime);
+  gain.gain.exponentialRampToValueAtTime(.0001, context.currentTime + .24);
+  oscillator.connect(gain).connect(master);
+  oscillator.start();
+  oscillator.stop(context.currentTime + .26);
 }
 
 function makeSky() {
@@ -264,9 +503,9 @@ function makeOcean() {
   const geometry = new THREE.PlaneGeometry(900, 1100, segments, segments);
   oceanUniforms = {
     uTime: { value: 0 },
-    uDeep: { value: new THREE.Color("#024568") },
-    uShallow: { value: new THREE.Color("#17a6bb") },
-    uSun: { value: new THREE.Color("#fff1b0") },
+    uDeep: { value: new THREE.Color("#012f48") },
+    uShallow: { value: new THREE.Color("#0d8ea5") },
+    uSun: { value: new THREE.Color("#fff0b8") },
   };
   const material = new THREE.ShaderMaterial({
     uniforms: oceanUniforms,
@@ -282,12 +521,14 @@ function makeOcean() {
         float phaseA = p.x * .095 + uTime * 1.55;
         float phaseB = p.y * .052 - uTime * 1.05 + p.x * .018;
         float phaseC = (p.x + p.y) * .16 + uTime * 2.2;
+        float phaseD = p.x * -.31 + p.y * .23 + uTime * 3.4;
         float a = sin(phaseA) * .20;
         float b = sin(phaseB) * .29;
         float c = sin(phaseC) * .07;
-        p.z += a + b + c;
-        float dx = cos(phaseA) * .019 + cos(phaseB) * .00522 + cos(phaseC) * .0112;
-        float dy = cos(phaseB) * .01508 + cos(phaseC) * .0112;
+        float d = sin(phaseD) * .026;
+        p.z += a + b + c + d;
+        float dx = cos(phaseA) * .019 + cos(phaseB) * .00522 + cos(phaseC) * .0112 - cos(phaseD) * .00806;
+        float dy = cos(phaseB) * .01508 + cos(phaseC) * .0112 + cos(phaseD) * .00598;
         vec3 localNormal = normalize(vec3(-dx, -dy, 1.0));
         vWave = p.z;
         vSlope = length(vec2(dx, dy));
@@ -308,26 +549,30 @@ function makeOcean() {
       varying vec3 vNormal;
       void main() {
         vec3 viewDir = normalize(cameraPosition - vWorld);
-        vec3 normal = normalize(vNormal);
+        float microX = sin(vWorld.x * .82 + vWorld.z * .51 + uTime * 2.9) * .035;
+        float microZ = cos(vWorld.x * .63 - vWorld.z * .91 - uTime * 2.25) * .031;
+        vec3 normal = normalize(vNormal + vec3(microX, 0.0, microZ));
         vec3 lightDir = normalize(vec3(-.36, .88, .31));
-        float crestA = max(0.0, sin(vWorld.x * .17 + vWorld.z * .065 + uTime * 1.45));
-        float crestB = max(0.0, sin(vWorld.x * -.11 + vWorld.z * .14 - uTime * 1.1));
-        float line = pow(crestA, 18.0) * pow(crestB, 4.0);
-        float sparkle = pow(max(0.0,
-          sin(vWorld.x * 1.35 + uTime * 1.7) *
-          sin(vWorld.z * 1.72 - uTime * 1.2)
-        ), 26.0);
-        float fresnel = pow(1.0 - max(dot(viewDir, normal), 0.0), 3.0);
+        float crestA = max(0.0, sin(vWorld.x * .14 + vWorld.z * .058 + uTime * 1.4));
+        float crestB = max(0.0, sin(vWorld.x * -.095 + vWorld.z * .125 - uTime * 1.05));
+        float line = pow(crestA, 15.0) * pow(crestB, 3.0);
+        float glitterMask =
+          .5 + .5 * sin(vWorld.x * 2.35 + uTime * 3.1) *
+          sin(vWorld.z * 1.84 - uTime * 2.35);
+        float fresnel = pow(1.0 - max(dot(viewDir, normal), 0.0), 3.4);
         float diffuse = max(dot(normal, lightDir), 0.0);
-        float specular = pow(max(dot(reflect(-lightDir, normal), viewDir), 0.0), 88.0);
-        float depthMix = smoothstep(-.42, .42, vWave) * .56 + diffuse * .18;
+        float reflectedSun = max(dot(reflect(-lightDir, normal), viewDir), 0.0);
+        float specular = pow(reflectedSun, 118.0) * 1.8
+          + pow(reflectedSun, 28.0) * glitterMask * .24;
+        float depthMix = smoothstep(-.45, .4, vWave) * .48 + diffuse * .17;
         vec3 color = mix(uDeep, uShallow, depthMix);
-        color = mix(color, vec3(.42, .78, .88), fresnel * .32);
-        float foam = smoothstep(.030, .055, vSlope) * smoothstep(.02, .24, vWave);
-        color += uSun * (specular * 1.35 + line * .1 + sparkle * .15);
-        color = mix(color, vec3(.83, .98, 1.0), foam * .2);
+        vec3 skyReflection = mix(vec3(.38, .73, .86), vec3(.79, .91, .94), clamp(viewDir.y * 1.8, 0.0, 1.0));
+        color = mix(color, skyReflection, fresnel * .48);
+        float foam = smoothstep(.028, .058, vSlope) * smoothstep(.015, .25, vWave);
+        color += uSun * specular;
+        color = mix(color, vec3(.82, .97, 1.0), clamp(foam * .28 + line * .11, 0.0, .34));
         float fog = smoothstep(70.0, 430.0, -vWorld.z);
-        color = mix(color, vec3(.52, .75, .8), fog * .5);
+        color = mix(color, vec3(.56, .76, .81), fog * .52);
         gl_FragColor = vec4(color, .99);
       }
     `,
@@ -381,18 +626,36 @@ function createJetSki(
 ) {
   const group = new THREE.Group();
   const hull = mesh(hullGeometry(), new THREE.MeshPhysicalMaterial({
-    color: primary, metalness: .32, roughness: .22, clearcoat: 1, clearcoatRoughness: .13,
+    color: primary,
+    metalness: .28,
+    roughness: .16,
+    clearcoat: 1,
+    clearcoatRoughness: .08,
+    envMapIntensity: 1.42,
   }));
   hull.rotation.y = Math.PI;
   group.add(hull);
 
-  const lower = mesh(new THREE.CapsuleGeometry(.62, 2.1, 5, 10), mat("#111820", .24, .3));
+  const lower = mesh(new THREE.CapsuleGeometry(.62, 2.1, 6, 14), new THREE.MeshPhysicalMaterial({
+    color: "#0b1118",
+    roughness: .28,
+    metalness: .26,
+    clearcoat: .62,
+    envMapIntensity: 1.1,
+  }));
   lower.rotation.x = Math.PI / 2;
   lower.scale.set(1, .43, 1);
   lower.position.set(0, -.28, .15);
   group.add(lower);
 
-  const deck = mesh(new THREE.CapsuleGeometry(.53, 1.6, 5, 12), mat(secondary, .24, .12));
+  const deck = mesh(new THREE.CapsuleGeometry(.53, 1.6, 6, 16), new THREE.MeshPhysicalMaterial({
+    color: secondary,
+    roughness: .2,
+    metalness: .16,
+    clearcoat: .9,
+    clearcoatRoughness: .1,
+    envMapIntensity: 1.32,
+  }));
   deck.rotation.x = Math.PI / 2;
   deck.scale.set(1, .34, 1);
   deck.position.set(0, .23, .2);
@@ -410,6 +673,17 @@ function createJetSki(
     rail.position.set(side * .63, .03, .02);
     rail.scale.z = .72;
     group.add(rail);
+
+    const sponson = mesh(new THREE.BoxGeometry(.19, .13, 1.18), new THREE.MeshPhysicalMaterial({
+      color: secondary,
+      roughness: .25,
+      metalness: .28,
+      clearcoat: .7,
+    }));
+    sponson.position.set(side * .71, -.12, .58);
+    sponson.rotation.x = -.05;
+    sponson.rotation.y = side * -.035;
+    group.add(sponson);
   });
 
   const intake = mesh(new THREE.BoxGeometry(.42, .18, .62), mat("#080b10", .5, .35));
@@ -432,6 +706,25 @@ function createJetSki(
   consoleBase.position.set(0, .72, -.64);
   consoleBase.rotation.x = -.22;
   group.add(consoleBase);
+  const windscreen = mesh(
+    new THREE.SphereGeometry(.42, 24, 12, 0, Math.PI * 2, 0, Math.PI * .52),
+    new THREE.MeshPhysicalMaterial({
+      color: "#74cde1",
+      metalness: .12,
+      roughness: .06,
+      transmission: .3,
+      transparent: true,
+      opacity: .72,
+      thickness: .18,
+      clearcoat: 1,
+      envMapIntensity: 1.7,
+      side: THREE.DoubleSide,
+    }),
+  );
+  windscreen.scale.set(.76, .58, .38);
+  windscreen.rotation.x = -.35;
+  windscreen.position.set(0, .88, -1.03);
+  group.add(windscreen);
   const bar = mesh(new THREE.CylinderGeometry(.035, .035, 1.05, 8), mat("#202a32", .2, .65));
   bar.rotation.z = Math.PI / 2;
   bar.position.set(0, 1.05, -.78);
@@ -442,6 +735,10 @@ function createJetSki(
     grip.position.set(x, 1.05, -.78);
     group.add(grip);
   });
+  const nozzle = mesh(new THREE.CylinderGeometry(.13, .18, .42, 12), mat("#10171d", .27, .58));
+  nozzle.rotation.x = Math.PI / 2;
+  nozzle.position.set(0, -.18, 2.05);
+  group.add(nozzle);
 
   const rider = new THREE.Group();
   const torso = mesh(new THREE.CapsuleGeometry(.24, .6, 7, 14), mat(riderColor, .43, .05));
@@ -489,7 +786,12 @@ function createJetSki(
 
   const helmet = new THREE.Group();
   const head = mesh(new THREE.SphereGeometry(.235, 24, 16), new THREE.MeshPhysicalMaterial({
-    color: secondary, roughness: .16, metalness: .32, clearcoat: 1, clearcoatRoughness: .08,
+    color: secondary,
+    roughness: .12,
+    metalness: .3,
+    clearcoat: 1,
+    clearcoatRoughness: .055,
+    envMapIntensity: 1.6,
   }));
   helmet.add(head);
 
@@ -593,10 +895,28 @@ function createJetSki(
   boostFx.visible = false;
   group.add(boostFx);
 
-  group.scale.setScalar(.92);
+  const contactShadow = mesh(
+    new THREE.CircleGeometry(1, 32),
+    new THREE.MeshBasicMaterial({
+      color: "#00131c",
+      transparent: true,
+      opacity: .18,
+      depthWrite: false,
+    }),
+    false,
+    false,
+  );
+  contactShadow.rotation.x = -Math.PI / 2;
+  contactShadow.scale.set(.72, 2.65, 1);
+  contactShadow.position.set(0, -.39, .22);
+  contactShadow.renderOrder = -1;
+  group.add(contactShadow);
+
+  group.scale.setScalar(.88);
   group.userData.rider = rider;
   group.userData.helmet = helmet;
   group.userData.boostFx = boostFx;
+  group.userData.contactShadow = contactShadow;
   return group;
 }
 
@@ -664,15 +984,27 @@ function createRamp() {
   return group;
 }
 
-function createTrackObject(type, x, z) {
+function createTrackObject(type, lane, courseDistance, options = {}) {
   const object = new THREE.Group();
   let visual;
   if (type === "gate") visual = createGate();
-  if (type === "buoy") visual = createBuoy(Math.random() > .5 ? "#ff5b21" : "#ffe144", .88);
+  if (type === "buoy") {
+    visual = createBuoy(hash(courseDistance) > .5 ? "#ff5b21" : "#ffe144", .88);
+  }
   if (type === "ramp") visual = createRamp();
+  if (type === "marker") {
+    visual = createBuoy(options.side < 0 ? "#ff5b21" : "#ffe144", .54);
+    visual.scale.y *= .86;
+  }
   object.add(visual);
-  object.position.set(x, 0, z);
-  object.userData = { type, hit: false, baseX: x };
+  object.userData = {
+    type,
+    hit: false,
+    lane,
+    courseDistance,
+    side: options.side || 0,
+    collidable: type !== "marker",
+  };
   trackRoot.add(object);
   trackObjects.push(object);
   return object;
@@ -681,16 +1013,25 @@ function createTrackObject(type, x, z) {
 function createCourse() {
   trackObjects.forEach((item) => trackRoot.remove(item));
   trackObjects = [];
-  const spacing = state.mode === "precision" ? 26 : 36;
-  const count = state.highQuality ? 19 : 13;
-  const lanes = [-5.2, 0, 5.2];
+  const spacing = state.mode === "precision" ? 28 : state.mode === "sprint" ? 42 : 36;
+  const visibleSpan = state.highQuality ? 880 : 610;
+  const count = Math.ceil(visibleSpan / spacing);
+  const lanes = [-4.9, 0, 4.9];
   for (let i = 0; i < count; i += 1) {
-    const z = -38 - i * spacing;
+    const distance = 42 + i * spacing;
     const lane = lanes[(i * 7 + 1) % 3];
-    let type = i % 5 === 1 ? "gate" : i % 7 === 4 ? "ramp" : "buoy";
-    if (state.mode === "sprint" && i % 3 !== 1) type = "gate";
-    createTrackObject(type, lane, z);
-    if (type === "buoy" && i % 2 === 0) createTrackObject("buoy", -lane || 5.2, z - 5);
+    let type = i % 6 === 1 ? "gate" : i % 10 === 6 ? "ramp" : "buoy";
+    if (state.mode === "sprint" && i % 5 === 1) type = "gate";
+    createTrackObject(type, lane, distance);
+    if (type === "buoy" && i % 2 === 0) {
+      createTrackObject("buoy", -lane || 4.9, distance + 5.5);
+    }
+  }
+
+  const markerSpacing = state.highQuality ? 42 : 56;
+  for (let distance = 24; distance < visibleSpan; distance += markerSpacing) {
+    createTrackObject("marker", -(TRACK_HALF_WIDTH + 1.35), distance, { side: -1 });
+    createTrackObject("marker", TRACK_HALF_WIDTH + 1.35, distance + markerSpacing * .5, { side: 1 });
   }
 }
 
@@ -766,13 +1107,55 @@ function createVenueArch() {
   return arch;
 }
 
+function createCoastStrip(side, innerDistance, outerDistance, material, height = 0) {
+  const segments = state.highQuality ? 72 : 40;
+  const length = 920;
+  const positions = [];
+  const uvs = [];
+  const indices = [];
+  for (let i = 0; i <= segments; i += 1) {
+    const ratio = i / segments;
+    const z = 34 - ratio * length;
+    const irregular = Math.sin(i * .72 + side) * 1.9 + Math.sin(i * .21) * 2.6;
+    const innerX = side * (innerDistance + irregular);
+    const outerX = side * outerDistance;
+    const innerY = -.54 + Math.sin(i * .43) * .08 + height;
+    const outerY = .12 + Math.sin(i * .17 + side) * .28 + height;
+    positions.push(innerX, innerY, z, outerX, outerY, z);
+    uvs.push(0, ratio * 12, 1, ratio * 12);
+    if (i < segments) {
+      const a = i * 2;
+      const b = a + 2;
+      if (side < 0) {
+        indices.push(a, a + 1, b + 1, a, b + 1, b);
+      } else {
+        indices.push(a, b + 1, a + 1, a, b, b + 1);
+      }
+    }
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return mesh(geometry, material, false, true);
+}
+
 function createScenery() {
-  const sandMaterial = mat("#d9c184", .98, 0);
+  const sandMaterial = new THREE.MeshStandardMaterial({
+    color: "#cdb47a",
+    roughness: .96,
+    metalness: 0,
+    vertexColors: false,
+  });
+  const grassMaterial = new THREE.MeshStandardMaterial({
+    color: "#496f50",
+    roughness: .98,
+    metalness: 0,
+  });
   [-1, 1].forEach((side) => {
-    const shore = mesh(new THREE.BoxGeometry(46, 1.6, 820), sandMaterial, false, true);
-    shore.position.set(side * 58, -1, -310);
-    shore.rotation.z = side * -.015;
-    sceneryRoot.add(shore);
+    sceneryRoot.add(createCoastStrip(side, 17.5, 104, sandMaterial));
+    sceneryRoot.add(createCoastStrip(side, 31, 112, grassMaterial, .24));
   });
 
   const islandMat = mat("#718a5c", .96, 0);
@@ -1035,8 +1418,10 @@ function buildPlayer() {
 function createRivals() {
   rivals.forEach((item) => rivalRoot.remove(item.group));
   rivals = [];
-  const laneStarts = [-5.4, 0, 5.4, -2.7, 2.7];
-  const gridOffsets = [-4, -14, -6, -10, -12];
+  const laneStarts = [-3.9, 1.35, 4.25, -1.35, 3.1];
+  // A real closed-course start is nearly abreast. Tiny offsets keep the
+  // silhouettes readable without handing every rival an artificial head start.
+  const gridOffsets = [1.6, .8, 0, -.8, -1.6];
   rivalProfiles.forEach((profile, index) => {
     const group = createJetSki(
       profile.primary,
@@ -1046,9 +1431,9 @@ function createRivals() {
       profile.skin,
       String(index + 2),
     );
-    group.scale.multiplyScalar(.96);
+    group.scale.multiplyScalar(.9);
     const initialProgress = gridOffsets[index];
-    group.position.set(laneStarts[index], 0, -initialProgress * WORLD_SCALE);
+    group.position.set(laneStarts[index], .15, -initialProgress * WORLD_SCALE);
     const label = createRiderLabel(profile.name, profile.primary);
     group.add(label);
     rivalRoot.add(group);
@@ -1058,14 +1443,22 @@ function createRivals() {
       profile,
       speed: 0,
       targetSpeed: 0,
-      xBase: laneStarts[index],
-      targetX: laneStarts[index],
-      phase: Math.random() * Math.PI * 2,
+      lineX: laneStarts[index],
+      targetLine: laneStarts[index],
+      lateralVelocity: 0,
+      phase: hash(index + 31) * Math.PI * 2,
       progress: initialProgress,
-      laneTimer: .8 + Math.random() * 1.8,
-      boostTimer: 2.5 + Math.random() * 5,
+      decisionTimer: .45 + hash(index + 2) * 1.1,
+      boostTimer: 2.5 + hash(index + 41) * 5,
       boosting: false,
-      nitro: 58 + Math.random() * 30,
+      nitro: 58 + hash(index + 51) * 30,
+      mistakeTimer: 5 + hash(index + 7) * 9,
+      mistakeOffset: 0,
+      paceNoise: .985 + hash(index + 12) * .03,
+      behavior: "racing",
+      wakePenalty: 0,
+      obstacleCooldown: 0,
+      obstacleHits: 0,
       rank: index + 2,
       visible: true,
     });
@@ -1098,6 +1491,7 @@ function initialize3D() {
   ui.game.replaceChildren(renderer.domElement);
 
   clock = new THREE.Clock();
+  createEnvironmentMap();
   makeSky();
   makeOcean();
 
@@ -1117,6 +1511,29 @@ function initialize3D() {
   sun.shadow.normalBias = .025;
   scene.add(sun, sun.target);
 
+  composer = null;
+  bloomPass = null;
+  const gl = renderer.getContext();
+  const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
+  const gpuName = debugInfo
+    ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
+    : gl.getParameter(gl.RENDERER);
+  const softwareRenderer = /swiftshader|llvmpipe|software/i.test(String(gpuName));
+  if (state.highQuality && !softwareRenderer) {
+    composer = new EffectComposer(renderer);
+    composer.setPixelRatio(Math.min(devicePixelRatio, 1.25));
+    composer.setSize(innerWidth, innerHeight);
+    composer.addPass(new RenderPass(scene, camera));
+    bloomPass = new UnrealBloomPass(
+      new THREE.Vector2(innerWidth, innerHeight),
+      .31,
+      .34,
+      .9,
+    );
+    composer.addPass(bloomPass);
+    composer.addPass(new OutputPass());
+  }
+
   trackRoot = new THREE.Group();
   wakeRoot = new THREE.Group();
   rivalRoot = new THREE.Group();
@@ -1131,6 +1548,14 @@ function initialize3D() {
   createSpraySystem();
   createCourse();
   createRivals();
+  radarDots = [];
+  ui.radar.replaceChildren();
+  rivalProfiles.forEach((profile) => {
+    const dot = document.createElement("i");
+    dot.style.setProperty("--radar-color", profile.primary);
+    ui.radar.append(dot);
+    radarDots.push(dot);
+  });
   renderer.setAnimationLoop(render);
 }
 
@@ -1142,6 +1567,18 @@ function resetRace() {
   state.nitro = 70;
   state.x = 0;
   state.vx = 0;
+  state.yaw = 0;
+  state.grip = 1;
+  state.gForce = 0;
+  state.vertical = .17;
+  state.verticalVelocity = 0;
+  state.airborne = false;
+  state.landingCooldown = 0;
+  state.throttleLoad = 0;
+  state.slipstream = 0;
+  state.curve = 0;
+  state.surfaceChop = 0;
+  state.raceSeed = 108 + state.courseLength * .01 + ["time", "sprint", "precision"].indexOf(state.mode) * 37;
   state.score = 0;
   state.gates = 0;
   state.totalGates = 0;
@@ -1164,6 +1601,9 @@ function resetRace() {
   ui.cinematicFx.classList.remove("splash");
   document.documentElement.style.setProperty("--boost", "0");
   document.documentElement.style.setProperty("--impact", "0");
+  if (ui.grip) ui.grip.textContent = "100%";
+  if (ui.gForce) ui.gForce.textContent = "0.0 G";
+  if (ui.surface) ui.surface.textContent = "CALM";
 }
 
 function showCallout(message, color = "#fff") {
@@ -1254,6 +1694,38 @@ function updateHud(dt) {
   ui.courseBar.style.width = `${clamp(state.distance / state.courseLength * 100, 0, 100)}%`;
   ui.nitroBar.style.width = `${state.nitro}%`;
   ui.nitroValue.textContent = `${Math.round(state.nitro)}%`;
+  ui.grip.textContent = `${Math.round(state.grip * 100)}%`;
+  ui.gForce.textContent = `${state.gForce.toFixed(1)} G`;
+  ui.surface.textContent = state.surfaceChop > .78
+    ? "ROUGH"
+    : state.surfaceChop > .42
+      ? "CHOP"
+      : "CALM";
+
+  const turn = courseTurn(state.distance + 42);
+  const turnStrength = Math.abs(turn);
+  ui.turnCue.classList.toggle("hard", turnStrength > .54);
+  ui.turnCue.classList.toggle("straight", turnStrength < .14);
+  if (turnStrength < .14) {
+    ui.turnArrow.textContent = "↑";
+    ui.turnLabel.textContent = "STRAIGHT";
+  } else {
+    const right = turn > 0;
+    ui.turnArrow.textContent = right ? "↗" : "↖";
+    ui.turnLabel.textContent = `${turnStrength > .54 ? "HARD" : "FAST"} ${right ? "RIGHT" : "LEFT"}`;
+  }
+
+  radarDots.forEach((dot, index) => {
+    const rival = rivals[index];
+    if (!rival) return;
+    const relative = rival.progress - state.distance;
+    const nearby = relative > -24 && relative < 64;
+    dot.style.display = nearby ? "block" : "none";
+    if (!nearby) return;
+    dot.style.left = `${clamp((rival.lineX / (TRACK_HALF_WIDTH * 2) + .5) * 100, 5, 95)}%`;
+    dot.style.bottom = `${clamp((relative + 24) / 88 * 100, 2, 98)}%`;
+  });
+
   standingsTimer -= dt;
   if (standingsTimer <= 0) {
     const order = getStandings();
@@ -1268,15 +1740,29 @@ function updateHud(dt) {
   }
 }
 
-function updateTrack(dt, worldSpeed) {
-  const recycleDistance = state.highQuality ? 720 : 490;
+function updateTrack() {
+  const recycleMetres = state.highQuality ? 880 : 610;
+  const currentCenter = courseCenter(state.distance);
   trackObjects.forEach((object) => {
-    object.position.z += worldSpeed * dt;
-    if (object.position.z > 14) {
-      object.position.z -= recycleDistance;
-      object.position.x = object.userData.baseX + Math.sin(state.distance * .003) * 1.4;
+    while (object.userData.courseDistance < state.distance - 34) {
+      object.userData.courseDistance += recycleMetres;
       object.userData.hit = false;
     }
+    const ahead = object.userData.courseDistance - state.distance;
+    const curveOffset = courseCenter(object.userData.courseDistance) - currentCenter;
+    object.position.x = object.userData.lane + curveOffset;
+    object.position.z = -ahead * WORLD_SCALE;
+    object.position.y = waterSample(
+      object.userData.lane,
+      object.userData.courseDistance,
+    ) * (object.userData.type === "marker" ? .48 : .16);
+    object.rotation.y = Math.atan(courseHeading(object.userData.courseDistance));
+    object.visible = ahead > -36 && ahead < recycleMetres + 30;
+    if (!object.userData.collidable) {
+      object.rotation.z = Math.sin(state.elapsed * 1.6 + object.userData.courseDistance) * .025;
+      return;
+    }
+
     const dx = Math.abs(object.position.x - state.x);
     const near = object.position.z > -.65 && object.position.z < 2.1;
     if (!near || object.userData.hit) return;
@@ -1299,14 +1785,19 @@ function updateTrack(dt, worldSpeed) {
       state.shake = Math.max(state.shake, .8);
       state.impact = 1;
       state.splash = 1.4;
+      state.grip = Math.max(.42, state.grip - .25);
       ui.cinematicFx.classList.remove("splash");
       void ui.cinematicFx.offsetWidth;
       ui.cinematicFx.classList.add("splash");
+      playImpact(.9);
       showCallout("BUOY HIT · SPEED LOST", "#ff7257");
     }
     if (object.userData.type === "ramp" && dx < 1.45) {
-      player.userData.jump = 1;
+      state.airborne = true;
+      state.verticalVelocity = 5.4 + state.speed * .012;
+      state.vertical = Math.max(state.vertical, .28);
       state.score += 300;
+      state.shake = Math.max(state.shake, .24);
       showCallout("AIRBORNE +300", "#fff0a8");
     }
   });
@@ -1315,82 +1806,210 @@ function updateTrack(dt, worldSpeed) {
 function updateRivals(dt) {
   const mode = config[state.mode];
   const level = aiLevels[state.difficulty];
-  const lanes = [-6.3, -3.15, 0, 3.15, 6.3];
+  const playerCenter = courseCenter(state.distance);
 
   rivals.forEach((rival, index) => {
     const { profile } = rival;
     const gapToPlayer = state.distance - rival.progress;
-    const basePace = mode.cruise * level.pace * (.91 + profile.skill * .1);
-    const adaptivePace = clamp(gapToPlayer / 160, -1, 1) * 7.5 * level.attack * profile.aggression;
+    const turnAhead = courseTurn(rival.progress + 34);
+    const cornerSeverity = Math.abs(turnAhead);
+    const ideal = racingLine(rival.progress, profile.cornering);
+
+    const field = [
+      {
+        progress: state.distance,
+        lineX: state.x,
+        player: true,
+      },
+      ...rivals
+        .filter((entry) => entry !== rival)
+        .map((entry) => ({
+          progress: entry.progress,
+          lineX: entry.lineX,
+          player: false,
+        })),
+    ];
+    const ahead = field
+      .map((entry) => ({ ...entry, gap: entry.progress - rival.progress }))
+      .filter((entry) => entry.gap > 0 && entry.gap < 30)
+      .sort((a, b) => a.gap - b.gap)[0];
+    const behind = field
+      .map((entry) => ({ ...entry, gap: rival.progress - entry.progress }))
+      .filter((entry) => entry.gap > 0 && entry.gap < 13)
+      .sort((a, b) => a.gap - b.gap)[0];
+
+    rival.decisionTimer -= dt;
+    rival.mistakeTimer -= dt;
+    if (rival.mistakeTimer <= 0) {
+      const makesError = hash(state.elapsed * .17 + index * 9.1) < level.errorRate;
+      rival.mistakeOffset = makesError
+        ? (hash(state.elapsed + index * 3.7) - .5) * (3.1 - level.consistency)
+        : 0;
+      rival.mistakeTimer = 4.5 + hash(state.elapsed + index * 11) * (9 + level.consistency * 5);
+    }
+    rival.mistakeOffset = lerp(rival.mistakeOffset, 0, 1 - Math.exp(-dt * .42));
+
+    if (rival.decisionTimer <= 0) {
+      let target = ideal + rival.mistakeOffset;
+      rival.behavior = "racing";
+
+      if (ahead && Math.abs(ahead.lineX - target) < 2.15) {
+        const roomLeft = ahead.lineX + TRACK_HALF_WIDTH;
+        const roomRight = TRACK_HALF_WIDTH - ahead.lineX;
+        const preferredSide = roomRight > roomLeft ? 1 : -1;
+        const attackSide = hash(index * 17 + state.elapsed * .13) < profile.aggression
+          ? preferredSide
+          : -preferredSide;
+        target = ahead.lineX + attackSide * (2.05 + profile.aggression * .55);
+        rival.behavior = "attacking";
+      } else if (behind?.player && behind.gap < 9 && profile.defense > .92) {
+        target = lerp(target, behind.lineX, .42 * profile.defense);
+        rival.behavior = "defending";
+      }
+
+      const obstacle = trackObjects
+        .filter((object) => (
+          object.userData.type === "buoy"
+          && object.userData.courseDistance > rival.progress + 4
+          && object.userData.courseDistance < rival.progress + 31
+          && Math.abs(object.userData.lane - target) < 1.25
+        ))
+        .sort((a, b) => a.userData.courseDistance - b.userData.courseDistance)[0];
+      if (obstacle) {
+        const direction = obstacle.userData.lane > 0 ? -1 : 1;
+        target = obstacle.userData.lane + direction * (1.75 + level.reaction * .22);
+        rival.behavior = "avoiding";
+      }
+
+      rival.targetLine = clamp(target, -TRACK_HALF_WIDTH + .55, TRACK_HALF_WIDTH - .55);
+      rival.decisionTimer = .24 + (1.22 - level.reaction * .58)
+        + hash(index + state.elapsed) * .32;
+    }
 
     rival.boostTimer -= dt;
     rival.boostLeft = Math.max(0, (rival.boostLeft || 0) - dt);
     if (
       rival.boostTimer <= 0
-      && rival.nitro > 24
-      && state.elapsed > 2
-      && Math.abs(rival.group.position.x) < 7
+      && rival.nitro > 22
+      && state.elapsed > 1.5
+      && cornerSeverity < .38
+      && (!ahead || ahead.gap < 24 || rival.progress < state.distance)
     ) {
-      rival.boostLeft = .72 + Math.random() * .72 * level.attack;
-      rival.boostTimer = 3.2 + Math.random() * (5.5 - profile.aggression * 1.4);
+      rival.boostLeft = (.58 + hash(state.elapsed + index) * .68)
+        * profile.boost
+        * level.attack;
+      rival.boostTimer = 3.5 + hash(index * 4 + state.elapsed) * (4.9 - profile.aggression);
     }
     rival.boosting = rival.boostLeft > 0;
-    const boostPace = rival.boosting ? 25 + 15 * profile.skill : 0;
-    const maxPace = mode.max * (state.difficulty === "elite" ? .985 : .94);
-    rival.targetSpeed = clamp(basePace + adaptivePace + boostPace, 78, maxPace);
+    const racePace = mode.cruise * level.pace * profile.skill * rival.paceNoise;
+    const physicalTop = mode.max * (1 + (profile.skill - 1) * .35);
+    const cornerLoss = cornerSeverity * (17.5 / (profile.cornering * level.consistency));
+    const lineError = Math.abs(rival.lineX - ideal);
+    const linePenalty = clamp(lineError * 1.45, 0, 7.2);
+    const draft = ahead && ahead.gap > 5 && ahead.gap < 19 && Math.abs(ahead.lineX - rival.lineX) < 1.35
+      ? 3.1 + level.reaction * 1.2
+      : 0;
+    const boostPace = rival.boosting ? 15.5 * profile.boost : 0;
+    const fairFieldCompression = clamp(gapToPlayer / 420, -.018, .018) * racePace;
+    const launchLimit = lerp(
+      72,
+      physicalTop,
+      clamp(state.elapsed / (3.1 / profile.launch), 0, 1),
+    );
+    const cornerLimit = racePace - cornerLoss - linePenalty;
+    rival.targetSpeed = clamp(
+      Math.min(
+        launchLimit,
+        cornerLimit + boostPace + draft + fairFieldCompression,
+      ),
+      62,
+      physicalTop,
+    );
     rival.speed = lerp(
       rival.speed,
       rival.targetSpeed,
-      1 - Math.exp(-dt * (1.12 + level.reaction * .55)),
+      1 - Math.exp(-dt * (1.02 + level.reaction * .42 + profile.launch * .2)),
     );
     if (rival.boosting) rival.nitro = Math.max(0, rival.nitro - dt * 23);
-    else rival.nitro = Math.min(100, rival.nitro + dt * 2.4);
+    else rival.nitro = Math.min(100, rival.nitro + dt * 1.9);
     rival.progress += rival.speed / 3.6 * dt;
 
-    rival.laneTimer -= dt;
-    const closeToPlayer = Math.abs(gapToPlayer) < 28;
-    if (rival.laneTimer <= 0) {
-      let laneIndex = Math.floor(Math.random() * lanes.length);
-      if (closeToPlayer && Math.abs(lanes[laneIndex] - state.x) < 1.8) {
-        laneIndex = (laneIndex + 2 + index) % lanes.length;
-      }
-      rival.targetX = lanes[laneIndex];
-      rival.laneTimer = 1.25 + Math.random() * (3.4 - level.reaction * .6);
-    }
-    if (closeToPlayer && Math.abs(rival.targetX - state.x) < 1.35) {
-      rival.targetX += rival.targetX <= state.x ? -1.6 : 1.6;
-      rival.targetX = clamp(rival.targetX, -7.2, 7.2);
+    const lateralAcceleration = (rival.targetLine - rival.lineX)
+      * (2.25 + level.reaction * .82)
+      - rival.lateralVelocity * (2.55 + level.consistency);
+    rival.lateralVelocity += lateralAcceleration * dt;
+    const maxLateral = 5.2 + level.reaction * 1.7;
+    rival.lateralVelocity = clamp(rival.lateralVelocity, -maxLateral, maxLateral);
+    rival.lineX = clamp(
+      rival.lineX + rival.lateralVelocity * dt,
+      -TRACK_HALF_WIDTH + .38,
+      TRACK_HALF_WIDTH - .38,
+    );
+
+    // Rivals obey the same buoy collision rules as the player. Better AI avoids
+    // most impacts, while a late decision or forced line still costs momentum.
+    rival.obstacleCooldown = Math.max(0, rival.obstacleCooldown - dt);
+    const buoyHit = rival.obstacleCooldown <= 0 && trackObjects.find((object) => (
+      object.userData.type === "buoy"
+      && Math.abs(object.userData.courseDistance - rival.progress) < .72
+      && Math.abs(object.userData.lane - rival.lineX) < .82
+    ));
+    if (buoyHit) {
+      const escapeDirection = Math.sign(
+        rival.lineX - buoyHit.userData.lane || (index % 2 ? 1 : -1),
+      );
+      rival.speed *= .76;
+      rival.lateralVelocity += escapeDirection * 2.25;
+      rival.targetLine = clamp(
+        rival.lineX + escapeDirection * 2.1,
+        -TRACK_HALF_WIDTH + .5,
+        TRACK_HALF_WIDTH - .5,
+      );
+      rival.obstacleCooldown = 1.3;
+      rival.obstacleHits += 1;
+      rival.behavior = "recovering";
     }
 
-    const raceLine = rival.targetX + Math.sin(state.elapsed * .68 + rival.phase) * .42;
-    const previousX = rival.group.position.x;
-    rival.group.position.x = lerp(
-      rival.group.position.x,
-      raceLine,
-      1 - Math.exp(-dt * (1.2 + level.reaction * .7)),
-    );
     const relativeMetres = rival.progress - state.distance;
     const targetZ = -relativeMetres * WORLD_SCALE;
     rival.group.visible = targetZ > -145 && targetZ < 24;
-    rival.label.visible = rival.group.visible && targetZ < -3.2 && targetZ > -95;
+    rival.label.visible = rival.group.visible && targetZ < -7 && targetZ > -95;
     rival.group.position.z = lerp(rival.group.position.z, targetZ, 1 - Math.exp(-dt * 9));
-    const waterBob = Math.sin(state.elapsed * 6.2 + rival.phase) * .055
-      + Math.sin(state.elapsed * 10.4 + index) * .02;
-    rival.group.position.y = .15 + waterBob;
-    const lateralVelocity = (rival.group.position.x - previousX) / Math.max(dt, .001);
+    const curveOffset = courseCenter(rival.progress) - playerCenter;
+    const targetWorldX = rival.lineX + curveOffset;
+    rival.group.position.x = lerp(
+      rival.group.position.x,
+      targetWorldX,
+      1 - Math.exp(-dt * (7.5 + level.reaction)),
+    );
+    const waterBob = waterSample(rival.lineX, rival.progress, state.elapsed + rival.phase * .12);
+    rival.group.position.y = .14 + waterBob * .78;
+    const relativeHeading = Math.atan(courseHeading(rival.progress))
+      - Math.atan(courseHeading(state.distance));
+    const steeringYaw = clamp(rival.lateralVelocity * -.035, -.12, .12);
+    rival.group.rotation.y = lerp(
+      rival.group.rotation.y,
+      relativeHeading + steeringYaw,
+      1 - Math.exp(-dt * 5.5),
+    );
     rival.group.rotation.z = lerp(
       rival.group.rotation.z,
-      clamp(-lateralVelocity * .055, -.3, .3),
+      clamp(-rival.lateralVelocity * .045 - turnAhead * .08, -.32, .32),
       1 - Math.exp(-dt * 5),
     );
-    rival.group.rotation.x = lerp(rival.group.rotation.x, -waterBob * .75, 1 - Math.exp(-dt * 5));
+    rival.group.rotation.x = lerp(
+      rival.group.rotation.x,
+      -waterSlope(rival.lineX, rival.progress) * 1.6,
+      1 - Math.exp(-dt * 6),
+    );
 
     if (rival.group.userData.rider) {
       rival.group.userData.rider.rotation.z = lerp(
         rival.group.userData.rider.rotation.z,
-        clamp(-lateralVelocity * .028, -.16, .16),
+        clamp(-rival.lateralVelocity * .032 - turnAhead * .09, -.2, .2),
         1 - Math.exp(-dt * 7),
       );
+      rival.group.userData.rider.rotation.x = -.22 - (rival.boosting ? .055 : 0);
     }
     if (rival.group.userData.boostFx) {
       rival.group.userData.boostFx.visible = rival.boosting && rival.group.visible;
@@ -1406,12 +2025,20 @@ function updateRivals(dt) {
       && Math.abs(rival.group.position.x - state.x) < 1.12
     ) {
       const direction = Math.sign(state.x - rival.group.position.x || (index % 2 ? 1 : -1));
-      state.speed *= .9;
-      state.vx += direction * 2.35;
+      const impact = clamp(Math.abs(state.speed - rival.speed) / 45 + .35, .35, 1);
+      state.speed *= 1 - impact * .08;
+      rival.speed *= 1 - impact * .05;
+      state.vx += direction * (1.5 + impact * 1.15);
+      rival.lateralVelocity -= direction * (1.2 + impact);
       state.shake = Math.max(state.shake, .58);
       state.impact = Math.max(state.impact, .72);
       rival.collisionCooldown = 1.2;
-      rival.targetX = clamp(rival.targetX - direction * 2.2, -7, 7);
+      rival.targetLine = clamp(
+        rival.targetLine - direction * 1.7,
+        -TRACK_HALF_WIDTH + .5,
+        TRACK_HALF_WIDTH - .5,
+      );
+      playImpact(impact * .65);
       showCallout("RIDER CONTACT · HOLD THE LINE", "#ffb070");
     }
   });
@@ -1469,39 +2096,173 @@ function updatePlayer(dt) {
   const mode = config[state.mode];
   const profile = riderProfiles[state.rider];
   const input = Number(state.keys.right) - Number(state.keys.left);
-  state.steer = lerp(state.steer, input, 1 - Math.exp(-dt * (8.5 + profile.handling * 2.2)));
-  state.vx += state.steer * dt * (state.speed > 80 ? 18.5 : 12) * profile.handling;
-  state.vx *= Math.pow(.045 + (profile.stability - 1) * .012, dt);
-  state.x = clamp(state.x + state.vx * dt, -8.4, 8.4);
-  if (Math.abs(state.x) > 7.5) state.speed *= 1 - dt * (.29 / profile.stability);
+  const speedRatio = clamp(state.speed / mode.max, 0, 1.1);
+  state.curve = courseTurn(state.distance + 25);
+  state.surfaceChop = clamp(
+    Math.abs(waterSlope(state.x, state.distance)) * 7.5 + speedRatio * .11,
+    0,
+    1,
+  );
+  state.steer = lerp(
+    state.steer,
+    input,
+    1 - Math.exp(-dt * (6.4 + profile.handling * 2.9)),
+  );
+
+  const requestedGrip = clamp(
+    profile.stability
+      - Math.abs(state.steer) * speedRatio * .17
+      - state.surfaceChop * .13
+      - Math.abs(state.vx) * .015,
+    .42,
+    1,
+  );
+  state.grip = lerp(
+    state.grip,
+    state.airborne ? .12 : requestedGrip,
+    1 - Math.exp(-dt * (state.airborne ? 5 : 2.8)),
+  );
+  const steeringForce = state.steer
+    * (6.8 + speedRatio * 11.8)
+    * profile.handling
+    * (.38 + state.grip * .62);
+  const centrifugalForce = -state.curve * speedRatio * speedRatio * 8.4;
+  state.vx += (steeringForce + centrifugalForce) * dt;
+  const lateralDamping = 2.8 + state.grip * 3.7 + (state.keys.brake ? 1.8 : 0);
+  state.vx *= Math.exp(-dt * lateralDamping);
+  state.x += state.vx * dt;
+  if (Math.abs(state.x) > TRACK_HALF_WIDTH) {
+    state.x = clamp(state.x, -TRACK_HALF_WIDTH, TRACK_HALF_WIDTH);
+    state.vx *= -.16;
+    state.speed *= 1 - dt * (.48 / profile.stability);
+    state.grip = Math.max(.38, state.grip - dt * .45);
+  }
 
   const boosting = state.keys.nitro && state.nitro > .2;
-  const boostTop = mode.max * (.96 + profile.boost * .04);
-  const target = state.keys.brake ? 66 : mode.cruise + (boosting ? boostTop - mode.cruise : 0);
-  state.speed = lerp(state.speed, target, 1 - Math.exp(-dt * (state.keys.brake ? 5 : 1.3)));
+  const draftRival = rivals
+    .map((rival) => ({
+      gap: rival.progress - state.distance,
+      lateral: Math.abs(rival.lineX - state.x),
+    }))
+    .filter((entry) => entry.gap > 5 && entry.gap < 19 && entry.lateral < 1.35)
+    .sort((a, b) => a.gap - b.gap)[0];
+  state.slipstream = lerp(
+    state.slipstream,
+    draftRival ? 1 : 0,
+    1 - Math.exp(-dt * (draftRival ? 2.2 : 1.4)),
+  );
+
+  const naturalTop = mode.max * profile.topSpeed;
+  const boostTop = naturalTop + 13.5 * profile.boost;
+  const cornerDrag = Math.abs(state.curve) * speedRatio * speedRatio * 10.5
+    + Math.abs(state.vx) * 1.65
+    + Math.abs(state.steer) * speedRatio * 4.2
+    + state.surfaceChop * 2.1;
+  const requestedSpeed = state.keys.brake
+    ? 58 + (1 - Math.abs(state.steer)) * 8
+    : mode.cruise
+      + state.slipstream * 4.2
+      + (boosting ? boostTop - mode.cruise : 0);
+  const targetSpeed = clamp(
+    requestedSpeed - cornerDrag,
+    state.keys.brake ? 52 : 72,
+    boosting ? boostTop : naturalTop,
+  );
+  const acceleration = targetSpeed > state.speed
+    ? (.74 + profile.acceleration * .52) * mode.acceleration
+    : state.keys.brake
+      ? 4.1
+      : 2.15;
+  state.speed = lerp(state.speed, targetSpeed, 1 - Math.exp(-dt * acceleration));
+  state.throttleLoad = lerp(
+    state.throttleLoad,
+    clamp((targetSpeed - state.speed) / 32, 0, 1) + (boosting ? .42 : 0),
+    1 - Math.exp(-dt * 4),
+  );
   if (boosting) state.nitro = Math.max(0, state.nitro - dt * (18 / profile.boost));
-  else state.nitro = Math.min(100, state.nitro + dt * 2.15);
+  else state.nitro = Math.min(100, state.nitro + dt * (1.72 + state.slipstream * .5));
   state.topSpeed = Math.max(state.topSpeed, state.speed);
   state.distance += state.speed / 3.6 * dt;
   state.elapsed += dt;
 
-  const wave = Math.sin(state.elapsed * 6.4) * .055 + Math.sin(state.elapsed * 11.2) * .022;
-  const jump = player.userData.jump || 0;
-  if (jump > 0) player.userData.jump = Math.max(0, jump - dt * .9);
-  const jumpY = jump > 0 ? Math.sin((1 - jump) * Math.PI) * 1.85 : 0;
+  const waveHeight = .17 + waterSample(state.x, state.distance) * .92;
+  const slope = waterSlope(state.x, state.distance);
+  state.landingCooldown = Math.max(0, state.landingCooldown - dt);
+  if (state.airborne) {
+    state.verticalVelocity -= GRAVITY * dt;
+    state.vertical += state.verticalVelocity * dt;
+    if (state.vertical <= waveHeight && state.verticalVelocity < 0) {
+      const landingSpeed = Math.abs(state.verticalVelocity);
+      state.vertical = waveHeight;
+      state.airborne = false;
+      state.verticalVelocity = Math.max(-.55, state.verticalVelocity * -.12);
+      state.speed *= 1 - clamp((landingSpeed - 2.2) * .018, 0, .13) / profile.stability;
+      state.shake = Math.max(state.shake, clamp(landingSpeed * .12, .25, .95));
+      state.splash = 1.25;
+      state.landingCooldown = .7;
+      emitSpray(state.x, .05, .15, clamp(landingSpeed * .22, .8, 1.8), state.steer);
+      ui.cinematicFx.classList.remove("splash");
+      void ui.cinematicFx.offsetWidth;
+      ui.cinematicFx.classList.add("splash");
+      if (landingSpeed > 4.8) {
+        playImpact(clamp(landingSpeed / 8, .4, .9));
+        showCallout("HARD LANDING · MOMENTUM LOST", "#ffd08a");
+      }
+    }
+  } else {
+    const spring = (waveHeight - state.vertical) * (32 + profile.stability * 8);
+    const damping = state.verticalVelocity * (6.2 + profile.stability * 1.3);
+    state.verticalVelocity += (spring - damping) * dt;
+    state.vertical += state.verticalVelocity * dt;
+    const launchWave = Math.max(0, slope) * speedRatio;
+    if (
+      state.landingCooldown <= 0
+      && state.speed > mode.cruise * 1.04
+      && launchWave > .105
+    ) {
+      state.airborne = true;
+      state.verticalVelocity = 1.45 + launchWave * 4.2;
+    }
+  }
+
+  const lateralAcceleration = Math.abs(steeringForce + centrifugalForce);
+  state.gForce = clamp(
+    .45 + lateralAcceleration / GRAVITY * 1.55 + state.surfaceChop * speedRatio * .7,
+    0,
+    6.8,
+  );
+  state.yaw = lerp(
+    state.yaw,
+    state.steer * (.075 + speedRatio * .075) - state.vx * .018,
+    1 - Math.exp(-dt * 4.8),
+  );
+
   player.position.x = lerp(player.position.x, state.x, 1 - Math.exp(-dt * 12));
-  player.position.y = .17 + wave + jumpY;
-  player.rotation.z = lerp(player.rotation.z, -state.steer * .28 - state.vx * .025, 1 - Math.exp(-dt * 7));
-  player.rotation.x = lerp(player.rotation.x, -wave * .8 + (jumpY > .2 ? -.08 : 0), 1 - Math.exp(-dt * 6));
-  player.rotation.y = lerp(player.rotation.y, state.steer * .08, 1 - Math.exp(-dt * 6));
+  player.position.y = state.vertical;
+  player.rotation.z = lerp(
+    player.rotation.z,
+    -state.steer * .22 - state.vx * .036 - state.curve * .075,
+    1 - Math.exp(-dt * 7),
+  );
+  player.rotation.x = lerp(
+    player.rotation.x,
+    -slope * 1.7 - state.verticalVelocity * .018 + (state.airborne ? -.045 : 0),
+    1 - Math.exp(-dt * 6),
+  );
+  player.rotation.y = lerp(player.rotation.y, state.yaw, 1 - Math.exp(-dt * 6));
 
   if (player.userData.rider) {
     player.userData.rider.rotation.z = lerp(
       player.userData.rider.rotation.z,
-      -state.steer * .16,
+      -state.steer * .18 - state.curve * .08,
       1 - Math.exp(-dt * 8),
     );
-    player.userData.rider.position.y = 1.02 + Math.sin(state.elapsed * 11) * .012;
+    player.userData.rider.rotation.x = lerp(
+      player.userData.rider.rotation.x,
+      -.22 - (boosting ? .065 : 0) + (state.keys.brake ? .055 : 0),
+      1 - Math.exp(-dt * 6),
+    );
+    player.userData.rider.position.y = 1.02 + state.verticalVelocity * .006;
   }
   if (player.userData.helmet) {
     player.userData.helmet.rotation.y = lerp(
@@ -1509,6 +2270,11 @@ function updatePlayer(dt) {
       state.steer * .08,
       1 - Math.exp(-dt * 5),
     );
+  }
+  if (player.userData.contactShadow) {
+    player.userData.contactShadow.material.opacity = clamp(.2 - Math.max(0, state.vertical - waveHeight) * .055, .02, .2);
+    const shadowScale = 1 + Math.max(0, state.vertical - waveHeight) * .08;
+    player.userData.contactShadow.scale.set(.72 * shadowScale, 2.65 * shadowScale, 1);
   }
   if (player.userData.boostFx) {
     player.userData.boostFx.visible = boosting;
@@ -1524,6 +2290,7 @@ function updatePlayer(dt) {
     nextWake = state.highQuality ? .026 : .065;
   }
   state.boosting = boosting;
+  updateAudio();
   return state.speed * .092;
 }
 
@@ -1533,20 +2300,28 @@ function updateCamera(dt, boosting) {
   state.splash = Math.max(0, state.splash - dt);
   const shakeX = (Math.random() - .5) * state.shake * .42;
   const shakeY = (Math.random() - .5) * state.shake * .24;
+  const lookAheadOffset = courseCenter(state.distance + 46) - courseCenter(state.distance);
   const desired = new THREE.Vector3(
-    state.x * .38 - state.steer * .65 + shakeX,
-    4.15 + Math.sin(state.elapsed * 2.5) * .045 + shakeY,
-    8.6 + (boosting ? .8 : 0),
+    state.x * .34 - state.steer * .58 - lookAheadOffset * .05 + shakeX,
+    3.7 + Math.sin(state.elapsed * 2.5) * .045 + shakeY + Math.max(0, state.vertical - .17) * .12,
+    9.45 + (boosting ? .85 : 0),
   );
   camera.position.lerp(desired, 1 - Math.exp(-dt * 4.2));
-  const target = new THREE.Vector3(state.x * .72 + shakeX * .3, .78 + shakeY * .2, -10.8);
+  const target = new THREE.Vector3(
+    state.x * .48 + lookAheadOffset * .78 + shakeX * .3,
+    .68 + shakeY * .2,
+    -13.4,
+  );
   camera.lookAt(target);
-  camera.rotation.z += state.steer * -.009 + shakeX * .006;
-  camera.fov = lerp(camera.fov, boosting ? 71 : 62, 1 - Math.exp(-dt * 3));
+  camera.rotation.z += state.steer * -.009 + state.curve * -.006 + shakeX * .006;
+  camera.fov = lerp(camera.fov, boosting ? 72 : 64, 1 - Math.exp(-dt * 3));
   camera.updateProjectionMatrix();
   const boostVisual = boosting ? clamp((state.speed - config[state.mode].cruise) / 38, .18, 1) : 0;
   document.documentElement.style.setProperty("--boost", boostVisual.toFixed(3));
   document.documentElement.style.setProperty("--impact", state.impact.toFixed(3));
+  if (bloomPass) {
+    bloomPass.strength = .27 + boostVisual * .13 + state.impact * .04;
+  }
 }
 
 function finishRace() {
@@ -1564,24 +2339,41 @@ function finishRace() {
     ? `PODIUM<br>SECURED.`
     : `RACE<br>COMPLETE.`;
   state.speed = 0;
+  state.throttleLoad = 0;
   document.documentElement.style.setProperty("--boost", "0");
+  updateAudio();
 }
 
 function render() {
   const rawDt = Math.min(clock.getDelta(), .05);
+  animFrame += 1;
+  if (state.phase !== "racing" && animFrame % 3 !== 0) return;
   if (!scene || state.paused) {
-    if (renderer && scene && camera) renderer.render(scene, camera);
+    if (renderer && scene && camera) {
+      if (composer && state.phase === "racing") composer.render();
+      else renderer.render(scene, camera);
+    }
     return;
   }
   oceanUniforms.uTime.value += rawDt;
 
   if (state.phase === "racing") {
     const worldSpeed = updatePlayer(rawDt);
-    updateTrack(rawDt, worldSpeed);
+    updateTrack();
     updateRivals(rawDt);
     updateWake(rawDt);
     updateCamera(rawDt, state.keys.nitro && state.nitro > 0);
     sceneryRoot.position.z = (sceneryRoot.position.z + worldSpeed * rawDt * .13) % 57;
+    sceneryRoot.position.x = lerp(
+      sceneryRoot.position.x,
+      -courseCenter(state.distance) * .14,
+      1 - Math.exp(-rawDt * .35),
+    );
+    sceneryRoot.rotation.y = lerp(
+      sceneryRoot.rotation.y,
+      -Math.atan(courseHeading(state.distance)) * .08,
+      1 - Math.exp(-rawDt * .45),
+    );
     if (cloudRoot) {
       cloudRoot.children.forEach((cloud) => {
         cloud.position.x += cloud.userData.drift * rawDt;
@@ -1596,6 +2388,7 @@ function render() {
     player.position.y = .17 + Math.sin(performance.now() * .002) * .05;
     camera.position.x = Math.sin(performance.now() * .00018) * 1.2;
     camera.lookAt(0, .75, -8);
+    updateAudio();
   }
 
   if (calloutTimer > 0) {
@@ -1606,16 +2399,17 @@ function render() {
     positionFxTimer -= rawDt;
     if (positionFxTimer <= 0) ui.positionPanel.classList.remove("position-gained", "position-lost");
   }
-  renderer.render(scene, camera);
+  if (composer && state.phase === "racing") composer.render();
+  else renderer.render(scene, camera);
 }
 
 async function fakeLoad() {
   ui.start.classList.add("hidden");
   ui.loading.classList.remove("hidden");
-  for (let progress = 0; progress <= 100; progress += 4) {
+  for (const progress of [0, 28, 57, 82, 100]) {
     ui.loadingBar.style.width = `${progress}%`;
     ui.loadingValue.textContent = `${progress}%`;
-    await new Promise((resolve) => setTimeout(resolve, progress < 72 ? 18 : 28));
+    await new Promise((resolve) => setTimeout(resolve, progress < 82 ? 28 : 42));
   }
   ui.loading.classList.add("hidden");
 }
@@ -1633,6 +2427,7 @@ async function countdown() {
 async function startRace() {
   state.phase = "loading";
   resetRace();
+  initializeAudio();
   if (!renderer) initialize3D();
   await fakeLoad();
   ui.hud.classList.remove("hidden");
@@ -1647,6 +2442,13 @@ function setPaused(value) {
   if (state.phase !== "racing" && !state.paused) return;
   state.paused = value;
   ui.pauseScreen.classList.toggle("hidden", !value);
+  if (audioEngine) {
+    audioEngine.master.gain.setTargetAtTime(
+      value || state.muted ? 0 : .58,
+      audioEngine.context.currentTime,
+      .08,
+    );
+  }
   if (!value) clock.getDelta();
 }
 
@@ -1660,6 +2462,9 @@ function backToMenu() {
   ui.start.classList.remove("hidden");
   document.documentElement.style.setProperty("--boost", "0");
   document.documentElement.style.setProperty("--impact", "0");
+  state.speed = 0;
+  state.throttleLoad = 0;
+  updateAudio();
 }
 
 function bindControl(button) {
@@ -1709,6 +2514,7 @@ addEventListener("resize", () => {
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
+  if (composer) composer.setSize(innerWidth, innerHeight);
 });
 document.addEventListener("visibilitychange", () => {
   if (document.hidden && state.phase === "racing") setPaused(true);
@@ -1738,6 +2544,20 @@ $("#restartFromPause").addEventListener("click", () => {
 $("#exitRace").addEventListener("click", backToMenu);
 $("#raceAgain").addEventListener("click", startRace);
 $("#backToMenu").addEventListener("click", backToMenu);
+ui.sound.addEventListener("click", () => {
+  state.muted = !state.muted;
+  ui.sound.setAttribute("aria-pressed", String(state.muted));
+  ui.sound.setAttribute("aria-label", state.muted ? "Unmute sound" : "Mute sound");
+  ui.sound.textContent = state.muted ? "♩" : "♫";
+  initializeAudio();
+  if (audioEngine) {
+    audioEngine.master.gain.setTargetAtTime(
+      state.muted ? 0 : .58,
+      audioEngine.context.currentTime,
+      .05,
+    );
+  }
+});
 $("#fullscreen").addEventListener("click", async () => {
   try {
     if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
@@ -1748,4 +2568,93 @@ $("#fullscreen").addEventListener("click", async () => {
 });
 
 if (!supportsWebGL()) ui.webglNotice.hidden = false;
+window.__WGP_DEBUG__ = {
+  snapshot: () => ({
+    phase: state.phase,
+    mode: state.mode,
+    difficulty: state.difficulty,
+    distance: state.distance,
+    elapsed: state.elapsed,
+    speed: state.speed,
+    position: state.position,
+    nitro: state.nitro,
+    collisions: state.collisions,
+    grip: state.grip,
+    gForce: state.gForce,
+    x: state.x,
+    airborne: state.airborne,
+    rivals: rivals.map((rival) => ({
+      name: rival.profile.name,
+      progress: rival.progress,
+      speed: rival.speed,
+      lineX: rival.lineX,
+      behavior: rival.behavior,
+      boosting: rival.boosting,
+      obstacleHits: rival.obstacleHits,
+    })),
+  }),
+};
+if (location.hostname === "wgp.local") {
+  window.__WGP_DEBUG__.resetScenario = ({
+    mode = "sprint",
+    difficulty = "pro",
+    rider = "nova",
+    distance = 1000,
+  } = {}) => {
+    state.mode = mode;
+    state.difficulty = difficulty;
+    state.rider = rider;
+    state.courseLength = distance;
+    resetRace();
+    state.phase = "racing";
+    return window.__WGP_DEBUG__.snapshot();
+  };
+  window.__WGP_DEBUG__.advanceRace = (seconds, autopilot = false) => {
+    const dt = 1 / 60;
+    const steps = Math.ceil(seconds / dt);
+    for (let step = 0; step < steps && state.phase === "racing"; step += 1) {
+      if (autopilot) {
+        const idealTarget = racingLine(state.distance + 8, riderProfiles[state.rider].handling);
+        let target = idealTarget;
+        const obstacles = trackObjects
+          .filter((object) => (
+            object.userData.type === "buoy"
+            && object.userData.courseDistance > state.distance + 5
+            && object.userData.courseDistance < state.distance + 42
+          ));
+        if (obstacles.length) {
+          const candidates = [-6.2, -3.1, 0, 3.1, 6.2];
+          target = candidates
+            .map((candidate) => {
+              const lineCost = Math.abs(candidate - idealTarget) * .42;
+              const obstacleCost = obstacles.reduce((cost, object) => {
+                const lateral = Math.abs(candidate - object.userData.lane);
+                const proximity = 1 - clamp(
+                  (object.userData.courseDistance - state.distance - 5) / 37,
+                  0,
+                  1,
+                );
+                return cost + Math.max(0, 2.05 - lateral) * proximity * 12;
+              }, 0);
+              return { candidate, cost: lineCost + obstacleCost };
+            })
+            .sort((a, b) => a.cost - b.cost)[0].candidate;
+        }
+        const error = target - state.x - state.vx * .22;
+        state.keys.left = error < -.16;
+        state.keys.right = error > .16;
+        const severity = Math.abs(courseTurn(state.distance + 34));
+        state.keys.brake = severity > .7 && state.speed > config[state.mode].cruise * .9;
+        state.keys.nitro = severity < .31 && state.nitro > 4;
+      }
+      updatePlayer(dt);
+      updateTrack();
+      updateRivals(dt);
+      updateWake(dt);
+      updateHud(dt);
+      if (state.distance >= state.courseLength) finishRace();
+    }
+    return window.__WGP_DEBUG__.snapshot();
+  };
+}
 document.documentElement.dataset.gameReady = "true";
