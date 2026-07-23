@@ -11,11 +11,26 @@
   background: var(--navy);
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
 html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
-body { overscroll-behavior: none; user-select: none; touch-action: none; }
+body {
+  overscroll-behavior: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: none;
+}
 button, input, select { font: inherit; }
-button { color: inherit; cursor: pointer; }
+button {
+  color: inherit;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
 #game, #game canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 #game { background: linear-gradient(#79c7ea 0 47%, #086988 48%, #031b2d 100%); }
 .hidden { display: none !important; }
@@ -351,6 +366,8 @@ fieldset { margin: 20px 0 0; padding: 0; border: 0; }
 .touch-controls button {
   width: 74px; height: 74px; border: 1px solid rgba(255,255,255,.34); border-radius: 50%;
   background: rgba(2, 11, 20, .44); backdrop-filter: blur(10px); font-size: 36px; font-weight: 300;
+  touch-action: none;
+  -webkit-user-drag: none;
 }
 .touch-controls button:active, .touch-controls button.active { background: rgba(255,255,255,.2); transform: scale(.94); }
 .touch-controls small { font-size: 8px; font-weight: 1000; letter-spacing: 1px; }
@@ -397,9 +414,13 @@ fieldset { margin: 20px 0 0; padding: 0; border: 0; }
 }
 
 @media (max-width: 900px) and (orientation: landscape) {
-  .topbar { height: 52px; padding-top: max(7px, env(safe-area-inset-top)); }
-  .brand strong { font-size: 22px; }
-  .brand small, .venue { display: none; }
+  .topbar {
+    height: 42px;
+    padding: max(5px, env(safe-area-inset-top)) max(9px, env(safe-area-inset-right)) 4px max(9px, env(safe-area-inset-left));
+  }
+  .brand strong { font-size: 19px; }
+  .brand small, .venue, .sound-button { display: none; }
+  .icon-button { width: 31px; height: 31px; font-size: 16px; }
   .start-screen { grid-template-columns: .65fr 1.35fr; padding: 54px 18px 10px; }
   .hero-copy .eyebrow, .feature-row { display: none; }
   .hero-copy h1 { font-size: 50px; }
@@ -422,32 +443,51 @@ fieldset { margin: 20px 0 0; padding: 0; border: 0; }
   .setup-footer { grid-template-columns: repeat(3, 72px) minmax(105px, 1fr); gap: 5px; margin-top: 7px; }
   .quality select { height: 31px; margin-top: 3px; font-size: 8px; }
   .start-button { height: 38px; }
-  .race-info { top: 53px; left: max(10px, env(safe-area-inset-left)); }
-  .race-info > div { padding: 7px 9px; }
-  .race-info strong { font-size: 16px; }
-  .course-info { top: 53px; right: max(56px, env(safe-area-inset-right)); padding: 9px; }
-  .telemetry { top: 102px; left: max(10px, env(safe-area-inset-left)); }
-  .telemetry > div { min-width: 55px; padding: 5px 7px; }
-  .telemetry small { font-size: 5px; }
-  .telemetry strong { font-size: 8px; }
-  .turn-cue { top: 137px; left: max(10px, env(safe-area-inset-left)); min-width: 108px; padding: 5px 7px; }
+  .race-info {
+    top: 44px;
+    left: max(7px, env(safe-area-inset-left));
+    gap: 3px;
+  }
+  .race-info > div { min-width: 58px; padding: 5px 7px; }
+  .race-info > div:first-child { min-width: 68px; }
+  .race-info > div:last-child { min-width: 92px; }
+  .race-info small { margin-bottom: 2px; font-size: 5px; letter-spacing: .8px; }
+  .race-info strong { font-size: 14px; }
+  .race-info strong i { font-size: 5px; }
+  .course-info {
+    top: 44px;
+    right: max(43px, calc(env(safe-area-inset-right) + 35px));
+    width: 148px;
+    padding: 6px 8px;
+  }
+  .course-info small { margin-bottom: 2px; font-size: 5px; }
+  .course-info strong { font-size: 7px; }
+  .course-bar { margin-top: 5px; }
+  .telemetry { display: none; }
+  .turn-cue { top: 88px; left: max(7px, env(safe-area-inset-left)); min-width: 96px; padding: 4px 6px; }
   .turn-cue > span { width: 20px; font-size: 19px; }
   .turn-cue small { display: none; }
   .turn-cue strong { font-size: 7px; }
-  .standings { top: 105px; right: max(56px, env(safe-area-inset-right)); width: min(250px, 37vw); }
-  .standings header { height: 24px; }
-  .standings ol { max-height: 148px; padding: 3px; }
-  .standings li { height: 18px; font-size: 6.2px; grid-template-columns: 14px 4px minmax(0,1fr) auto; gap: 4px; }
-  .standings li .gap { font-size: 5.5px; }
-  .pause-button { top: 54px; right: max(8px, env(safe-area-inset-right)); width: 36px; height: 36px; }
-  .touch-controls button { width: 62px; height: 62px; }
-  .nitro { bottom: max(10px, env(safe-area-inset-bottom)); padding: 8px 10px; }
-  .race-radar { right: max(8px, env(safe-area-inset-right)); bottom: max(8px, env(safe-area-inset-bottom)); width: 56px; height: 76px; border-radius: 28px 28px 5px 5px; }
+  .standings { display: none; }
+  .pause-button { top: 45px; right: max(7px, env(safe-area-inset-right)); width: 32px; height: 32px; }
+  .touch-controls {
+    bottom: max(7px, env(safe-area-inset-bottom));
+    padding-right: max(10px, env(safe-area-inset-right));
+    padding-left: max(10px, env(safe-area-inset-left));
+  }
+  .touch-controls > div { gap: 7px; }
+  .touch-controls button { width: 54px; height: 54px; font-size: 29px; }
+  .touch-controls small { font-size: 6px; letter-spacing: .7px; }
+  .nitro { bottom: max(7px, env(safe-area-inset-bottom)); width: 116px; padding: 6px 8px; }
+  .nitro small { margin-bottom: 2px; font-size: 5px; }
+  .nitro strong { font-size: 11px; }
+  .nitro-bar { margin-top: 5px; }
+  .race-radar { right: max(126px, calc(env(safe-area-inset-right) + 116px)); bottom: max(7px, env(safe-area-inset-bottom)); width: 46px; height: 59px; border-radius: 23px 23px 5px 5px; }
   .race-radar::before { display: none; }
   #radarRivals { inset: 7px 5px 8px; }
   .radar-lane { top: 7px; bottom: 8px; }
   .radar-player { bottom: 7px; width: 5px; height: 8px; }
-  .circuit-map { right: max(8px, env(safe-area-inset-right)); bottom: max(91px, calc(env(safe-area-inset-bottom) + 83px)); width: 102px; }
+  .circuit-map { right: max(7px, env(safe-area-inset-right)); bottom: max(68px, calc(env(safe-area-inset-bottom) + 62px)); width: 78px; }
   .circuit-map header { height: 18px; }
   .circuit-map header span { display: none; }
   .circuit-map svg { padding: 3px 4px 4px; }
@@ -462,6 +502,33 @@ fieldset { margin: 20px 0 0; padding: 0; border: 0; }
   .broadcast-card footer { padding: 6px 10px; }
   .race-banner { top: 27%; min-width: 210px; padding: 6px 20px 8px; }
   .race-banner strong { font-size: 18px; }
+}
+
+@media (max-width: 900px) and (orientation: landscape) and (max-height: 360px) {
+  .topbar {
+    height: 34px;
+    padding-top: max(3px, env(safe-area-inset-top));
+    padding-bottom: 2px;
+  }
+  .brand strong { font-size: 16px; }
+  .icon-button { width: 27px; height: 27px; font-size: 14px; }
+  .race-info { top: 35px; }
+  .race-info > div { min-width: 52px; padding: 4px 6px; }
+  .race-info > div:first-child { min-width: 61px; }
+  .race-info > div:last-child { min-width: 83px; }
+  .race-info strong { font-size: 12px; }
+  .course-info { top: 35px; right: max(37px, calc(env(safe-area-inset-right) + 31px)); }
+  .pause-button { top: 36px; width: 29px; height: 29px; }
+  .turn-cue { top: 75px; }
+  .touch-controls button { width: 50px; height: 50px; font-size: 26px; }
+  .nitro { width: 102px; }
+  .circuit-map { display: none; }
+  .race-radar {
+    right: max(116px, calc(env(safe-area-inset-right) + 106px));
+    width: 42px;
+    height: 53px;
+  }
+  .race-banner { top: 24%; }
 }
 
 @media (orientation: portrait) and (max-width: 820px) {

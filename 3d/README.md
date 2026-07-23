@@ -1,4 +1,4 @@
-# WGP#1 Championship Racing 3.0
+# WGP#1 Championship Racing 3.1
 
 A browser-based Three.js/WebGL closed-course water-racing game with
 hydrodynamic handling, tactical eight-rider AI, lap timing, official race
@@ -31,9 +31,10 @@ rules, and broadcast-style presentation.
   chop, edge drag, launch, landing, and hard-landing momentum loss
 - Seven named rivals with Technical, Holeshot, Smooth, Aggressor, Late Braker,
   Defender, and Comeback racecraft profiles
-- AI racing-line prediction, apex selection, overtaking, defending, obstacle
-  avoidance, slipstreaming, Nitro management, errors, buoy impacts, and
-  recovery
+- AI multi-line planning, look-ahead braking, apex and exit selection,
+  committed overtakes, single-move defending, side-by-side awareness,
+  obstacle avoidance, slipstreaming, Nitro strategy, reaction times,
+  pressure errors, buoy impacts, and recovery
 - Sport, Pro, and World Class difficulty changes reaction, consistency,
   line quality, and decisions rather than teleporting rivals or granting
   hidden catch-up speed
@@ -41,7 +42,7 @@ rules, and broadcast-style presentation.
 ## Rendering and audio
 
 - Detailed procedural jet skis, riders, helmets, suits, buoys, gates, ramps,
-  venue arch, officials' boats, crowds, grandstands, palms, flags, clouds,
+  officials' boats, crowds, grandstands, palms, flags, clouds,
   shoreline, and mountains
 - Multi-wave shader ocean with condition-sensitive wave scale, Fresnel
   reflection, crest foam, sun sparkle, animated sky, fog, and cinematic tone
@@ -57,6 +58,25 @@ rules, and broadcast-style presentation.
 
 The production 2D game remains at the repository root. This version is
 isolated under `/3d/`.
+
+## Real-time multiplayer path
+
+The preview remains a complete single-player build. A fair real-time mode
+must use an authoritative room server rather than trusting positions sent by
+players' browsers. The intended production architecture is one WebSocket room
+per race, with:
+
+- server-validated steering, braking, Nitro, checkpoints, laps, contacts, and
+  official results
+- 20 Hz authoritative simulation plus client prediction and interpolation for
+  smooth 60 FPS rendering
+- room codes, private/public lobbies, reconnect support, spectators, and AI
+  taking over disconnected or empty grid positions
+- region-aware rooms and latency display before the start
+
+The current static preview does not expose a non-functional Online button.
+Multiplayer should be enabled only after a room server endpoint is deployed
+and its synchronization and anti-cheat tests pass.
 
 ## Third-party assets
 

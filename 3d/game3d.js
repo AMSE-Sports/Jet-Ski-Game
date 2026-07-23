@@ -392,6 +392,178 @@ function racingLine(distance, skill = 1) {
   return clamp((-approach * 1.45 + apex * 2.65) * skill, -3.85, 3.85);
 }
 
+function scanUpcomingCorner(distance) {
+  const samples = [8, 16, 26, 38, 52, 68, 86];
+  let peak = {
+    severity: Math.abs(courseTurn(distance + samples[0])),
+    direction: Math.sign(courseTurn(distance + samples[0])),
+    distance: samples[0],
+  };
+  samples.slice(1).forEach((lookAhead) => {
+    const turn = courseTurn(distance + lookAhead);
+    const severity = Math.abs(turn);
+    if (severity > peak.severity) {
+      peak = {
+        severity,
+        direction: Math.sign(turn),
+        distance: lookAhead,
+      };
+    }
+  });
+  return {
+    ...peak,
+    current: Math.abs(courseTurn(distance + 6)),
+    exit: Math.abs(courseTurn(distance + peak.distance + 24)),
+  };
+}
+
+function uniqueLaneCandidates(values) {
+  const seen = new Set();
+  return values
+    .map((value) => clamp(value, -TRACK_HALF_WIDTH + .58, TRACK_HALF_WIDTH - .58))
+    .filter((value) => {
+      const key = Math.round(value * 10);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+}
+
+function planRivalLine(rival, index, field, ideal, corner, ahead, behind, level) {
+  const { profile } = rival;
+  if (rival.passTargetId) {
+    const previousTarget = field.find((entry) => entry.id === rival.passTargetId);
+    if (
+      !previousTarget
+      || previousTarget.progress < rival.progress - 4
+      || previousTarget.progress > rival.progress + 38
+    ) {
+      rival.passTargetId = null;
+    }
+  }
+  const closingSpeed = ahead ? (rival.speed - ahead.speed) / 3.6 : 0;
+  const catchTime = ahead && closingSpeed > .35 ? ahead.gap / closingSpeed : Infinity;
+  const canAttack = Boolean(
+    ahead
+      && ahead.gap < 25
+      && (catchTime < 4.2 || ahead.gap < 9)
+      && corner.current < .78,
+  );
+  const canDefend = Boolean(
+    behind
+      && behind.gap < 10
+      && behind.speed > rival.speed - 3
+      && profile.defense > .92
+      && rival.defenseCooldown <= 0
+      && corner.current < .62,
+  );
+
+  if (canAttack && rival.planTimer <= 0 && rival.passCooldown <= 0) {
+    const isNewTarget = rival.passTargetId !== ahead.id;
+    if (isNewTarget) {
+      const roomLeft = ahead.lineX + TRACK_HALF_WIDTH;
+      const roomRight = TRACK_HALF_WIDTH - ahead.lineX;
+      const roomSide = roomRight > roomLeft ? 1 : -1;
+      const insideSide = corner.direction || roomSide;
+      rival.passSide = hash(index * 23 + state.elapsed * .09)
+        < profile.aggression * .58
+        ? insideSide
+        : roomSide;
+      rival.passTargetId = ahead.id;
+      rival.passesAttempted += 1;
+    }
+    rival.committedLine = ahead.lineX + rival.passSide * (2.15 + profile.aggression * .48);
+    rival.planTimer = 1.25 + profile.aggression * 1.05;
+    rival.passCooldown = 4.2 + (1 - profile.aggression) * 2.2;
+  } else if (canDefend && rival.planTimer <= 0) {
+    rival.committedLine = lerp(ideal, behind.lineX, .48 * profile.defense);
+    rival.planTimer = .58 + profile.defense * .42;
+    rival.defenseCooldown = 2.15;
+  }
+
+  const candidates = uniqueLaneCandidates([
+    ideal,
+    rival.targetLine,
+    rival.committedLine,
+    -5.8,
+    -3.7,
+    -1.85,
+    0,
+    1.85,
+    3.7,
+    5.8,
+    ahead ? ahead.lineX - 2.3 : ideal,
+    ahead ? ahead.lineX + 2.3 : ideal,
+    behind ? behind.lineX : ideal,
+  ]);
+  const obstacles = trackObjects.filter((object) => (
+    object.userData.type === "buoy"
+    && object.userData.courseDistance > rival.progress + 3
+    && object.userData.courseDistance < rival.progress + 44
+  ));
+
+  const scored = candidates.map((candidate) => {
+    const edgeSpace = TRACK_HALF_WIDTH - Math.abs(candidate);
+    const transition = Math.abs(candidate - rival.lineX);
+    let cost = Math.abs(candidate - ideal) * (1.15 + corner.severity * 2.35)
+      + transition * (.2 + corner.current * .74)
+      + Math.abs(candidate - rival.targetLine) * (.7 + corner.current * .32)
+      + Math.max(0, 1.6 - edgeSpace) * 8;
+
+    field.forEach((entry) => {
+      const relative = entry.progress - rival.progress;
+      if (relative < -8 || relative > 34) return;
+      const relativeSpeed = (rival.speed - entry.speed) / 3.6;
+      const horizon = clamp(relative / Math.max(.8, relativeSpeed), .35, 2.4);
+      const predictedGap = relative - relativeSpeed * horizon;
+      const predictedLine = entry.lineX + (entry.lateralVelocity || 0) * Math.min(.55, horizon);
+      const lateral = Math.abs(candidate - predictedLine);
+      const overlapRisk = Math.max(0, 2.05 - lateral);
+      const longitudinalRisk = predictedGap >= -4.5 && predictedGap <= 13
+        ? 1 - clamp(Math.abs(predictedGap - 2.5) / 11, 0, 1)
+        : 0;
+      cost += overlapRisk * longitudinalRisk * (7.5 + level.reaction * 3.2);
+    });
+
+    obstacles.forEach((object) => {
+      const distance = object.userData.courseDistance - rival.progress;
+      const lateral = Math.abs(candidate - object.userData.lane);
+      const urgency = 1 - clamp((distance - 3) / 41, 0, 1);
+      cost += Math.max(0, 1.82 - lateral) * urgency * (15 + level.reaction * 5);
+    });
+
+    if (canAttack && ahead) {
+      const passSeparation = Math.abs(candidate - ahead.lineX);
+      cost += Math.max(0, 1.75 - passSeparation) * 9;
+      if (Math.sign(candidate - ahead.lineX) === rival.passSide) cost -= 2.1 * profile.aggression;
+    }
+    if (canDefend && behind) {
+      cost += Math.abs(candidate - behind.lineX) * .28;
+    }
+    if (rival.planTimer > 0) {
+      cost += Math.abs(candidate - rival.committedLine) * 2.8;
+    }
+    cost += hash(index * 37 + candidate * 2.9 + Math.floor(state.elapsed * 2)) * (1 - level.consistency) * 2.4;
+    return { candidate, cost };
+  });
+
+  const choice = scored.sort((a, b) => a.cost - b.cost)[0]?.candidate ?? ideal;
+  let behavior = "racing";
+  if (obstacles.some((object) => (
+    Math.abs(object.userData.lane - ideal) < 1.8
+    && Math.abs(choice - ideal) > .7
+  ))) {
+    behavior = "avoiding";
+  } else if (canAttack) {
+    behavior = "attacking";
+  } else if (canDefend) {
+    behavior = "defending";
+  } else if (rival.planTimer > 0 && ahead) {
+    behavior = "committed";
+  }
+  return { target: choice, behavior };
+}
+
 function waterSample(x, distance, time = state.elapsed) {
   const chopScale = conditionPresets[state.conditions]?.chop || 1;
   const longWave = Math.sin(distance * .071 - time * 2.05 + x * .055) * .105;
@@ -1291,37 +1463,6 @@ function createRaceBoat() {
   return boat;
 }
 
-function createVenueArch() {
-  const arch = new THREE.Group();
-  const archMaterial = new THREE.MeshPhysicalMaterial({
-    color: "#ff5b21", roughness: .3, metalness: .08, clearcoat: .6,
-  });
-  [-8.5, 8.5].forEach((x) => {
-    const post = mesh(new THREE.CylinderGeometry(.38, .55, 5.6, 14), archMaterial);
-    post.position.set(x, 2.25, 0);
-    arch.add(post);
-  });
-  const beam = mesh(new THREE.BoxGeometry(18, .85, .8), archMaterial);
-  beam.position.y = 5.1;
-  arch.add(beam);
-  const canvas = document.createElement("canvas");
-  canvas.width = 1024;
-  canvas.height = 128;
-  const context = canvas.getContext("2d");
-  context.fillStyle = "#07111c";
-  context.fillRect(0, 0, canvas.width, canvas.height);
-  context.fillStyle = "#fff";
-  context.font = "900 italic 72px Arial";
-  context.textAlign = "center";
-  context.fillText("WGP#1  WORLD SERIES", canvas.width / 2, 90);
-  const board = mesh(new THREE.PlaneGeometry(15.5, 1.65), new THREE.MeshBasicMaterial({
-    map: new THREE.CanvasTexture(canvas), side: THREE.DoubleSide,
-  }), false, false);
-  board.position.set(0, 5.1, .43);
-  arch.add(board);
-  return arch;
-}
-
 function createCoastStrip(side, innerDistance, outerDistance, material, height = 0) {
   const segments = state.highQuality ? 72 : 40;
   const length = 920;
@@ -1447,10 +1588,6 @@ function createScenery() {
     flag.rotation.y = Math.PI / 2;
     sceneryRoot.add(flag);
   }
-
-  const arch = createVenueArch();
-  arch.position.set(0, 0, -42);
-  sceneryRoot.add(arch);
 
   const mountains = mesh(new THREE.IcosahedronGeometry(62, 2), mat("#587b79", .98, 0), false, true);
   mountains.scale.set(3.8, .58, 1);
@@ -1669,9 +1806,24 @@ function createRivals() {
       nitro: 58 + hash(index + 51) * 30,
       mistakeTimer: 5 + hash(index + 7) * 9,
       mistakeOffset: 0,
+      mistakeKind: "none",
+      mistakeLeft: 0,
       paceNoise: .985 + hash(index + 12) * .03,
       behavior: "racing",
       focus: .988 + hash(index + 73) * .024,
+      grip: 1,
+      surfaceChop: 0,
+      throttle: 0,
+      braking: false,
+      planTimer: 0,
+      committedLine: laneStarts[index],
+      passSide: index % 2 ? -1 : 1,
+      passCooldown: 0,
+      passTargetId: null,
+      defenseCooldown: 0,
+      startReaction: (.115 + hash(index + 91) * .18) / profile.launch,
+      lineChanges: 0,
+      passesAttempted: 0,
       wakePenalty: 0,
       obstacleCooldown: 0,
       obstacleHits: 0,
@@ -2190,132 +2342,212 @@ function updateRivals(dt) {
   rivals.forEach((rival, index) => {
     const { profile } = rival;
     const finalLap = rival.progress >= state.courseLength - LAP_LENGTH;
+    const corner = scanUpcomingCorner(rival.progress);
     const turnAhead = courseTurn(rival.progress + 34);
-    const cornerSeverity = Math.abs(turnAhead);
+    const cornerSeverity = corner.severity;
     const ideal = racingLine(rival.progress, profile.cornering);
 
     const field = [
       {
+        id: "player",
         progress: state.distance,
         lineX: state.x,
+        lateralVelocity: state.vx,
+        speed: state.speed,
         player: true,
       },
       ...rivals
         .filter((entry) => entry !== rival)
         .map((entry) => ({
+          id: entry.profile.name,
           progress: entry.progress,
           lineX: entry.lineX,
+          lateralVelocity: entry.lateralVelocity,
+          speed: entry.speed,
           player: false,
         })),
     ];
     const ahead = field
       .map((entry) => ({ ...entry, gap: entry.progress - rival.progress }))
-      .filter((entry) => entry.gap > 0 && entry.gap < 30)
+      .filter((entry) => entry.gap > 0 && entry.gap < 34)
       .sort((a, b) => a.gap - b.gap)[0];
     const behind = field
       .map((entry) => ({ ...entry, gap: rival.progress - entry.progress }))
-      .filter((entry) => entry.gap > 0 && entry.gap < 13)
+      .filter((entry) => entry.gap > 0 && entry.gap < 14)
       .sort((a, b) => a.gap - b.gap)[0];
 
+    rival.planTimer = Math.max(0, rival.planTimer - dt);
+    rival.passCooldown = Math.max(0, rival.passCooldown - dt);
+    rival.defenseCooldown = Math.max(0, rival.defenseCooldown - dt);
     rival.decisionTimer -= dt;
     rival.mistakeTimer -= dt;
+    rival.mistakeLeft = Math.max(0, rival.mistakeLeft - dt);
+    if (rival.mistakeLeft <= 0) rival.mistakeKind = "none";
     if (rival.mistakeTimer <= 0) {
-      const makesError = hash(state.elapsed * .17 + index * 9.1) < level.errorRate;
-      rival.mistakeOffset = makesError
-        ? (hash(state.elapsed + index * 3.7) - .5) * (3.1 - level.consistency)
-        : 0;
-      rival.mistakeTimer = 4.5 + hash(state.elapsed + index * 11) * (9 + level.consistency * 5);
+      const errorRoll = hash(state.elapsed * .17 + index * 9.1);
+      const makesError = errorRoll < level.errorRate * (.82 + cornerSeverity * .5);
+      const lineVariation = (hash(state.elapsed + index * 3.7) - .5)
+        * (1.18 - level.consistency)
+        * 2.8;
+      rival.mistakeOffset = lineVariation;
+      if (makesError) {
+        const kindRoll = hash(state.elapsed * .71 + index * 5.3);
+        rival.mistakeKind = kindRoll < .3
+          ? "late-brake"
+          : kindRoll < .58
+            ? "missed-apex"
+            : kindRoll < .8
+              ? "hesitation"
+              : "oversteer";
+        rival.mistakeLeft = .62 + hash(index * 13 + state.elapsed) * .82;
+        rival.mistakeOffset += (hash(index * 17 + state.elapsed * .4) - .5)
+          * (rival.mistakeKind === "missed-apex" ? 2.7 : 1.45);
+        if (rival.mistakeKind === "oversteer") {
+          rival.lateralVelocity += (hash(index * 31 + state.elapsed) > .5 ? 1 : -1)
+            * (1.15 + cornerSeverity * .8);
+        }
+      }
+      rival.mistakeTimer = 4.2 + hash(state.elapsed + index * 11)
+        * (8.5 + level.consistency * 5.5);
     }
-    rival.mistakeOffset = lerp(rival.mistakeOffset, 0, 1 - Math.exp(-dt * .42));
+    rival.mistakeOffset = lerp(
+      rival.mistakeOffset,
+      0,
+      1 - Math.exp(-dt * (rival.mistakeLeft > 0 ? .3 : .72)),
+    );
 
     if (rival.decisionTimer <= 0) {
-      let target = ideal + rival.mistakeOffset;
-      rival.behavior = "racing";
-
-      if (ahead && Math.abs(ahead.lineX - target) < 2.15) {
-        const roomLeft = ahead.lineX + TRACK_HALF_WIDTH;
-        const roomRight = TRACK_HALF_WIDTH - ahead.lineX;
-        const preferredSide = roomRight > roomLeft ? 1 : -1;
-        const attackSide = hash(index * 17 + state.elapsed * .13) < profile.aggression
-          ? preferredSide
-          : -preferredSide;
-        target = ahead.lineX + attackSide * (2.05 + profile.aggression * .55);
-        rival.behavior = "attacking";
-      } else if (behind && behind.gap < 9 && profile.defense > .92) {
-        target = lerp(target, behind.lineX, .42 * profile.defense);
-        rival.behavior = "defending";
-      }
-
-      const obstacle = trackObjects
-        .filter((object) => (
-          object.userData.type === "buoy"
-          && object.userData.courseDistance > rival.progress + 4
-          && object.userData.courseDistance < rival.progress + 31
-          && Math.abs(object.userData.lane - target) < 1.25
-        ))
-        .sort((a, b) => a.userData.courseDistance - b.userData.courseDistance)[0];
-      if (obstacle) {
-        const direction = obstacle.userData.lane > 0 ? -1 : 1;
-        target = obstacle.userData.lane + direction * (1.75 + level.reaction * .22);
-        rival.behavior = "avoiding";
-      }
-
-      rival.targetLine = clamp(target, -TRACK_HALF_WIDTH + .55, TRACK_HALF_WIDTH - .55);
-      rival.decisionTimer = .24 + (1.22 - level.reaction * .58)
-        + hash(index + state.elapsed) * .32;
+      const previousTarget = rival.targetLine;
+      const plan = planRivalLine(rival, index, field, ideal, corner, ahead, behind, level);
+      rival.targetLine = clamp(
+        plan.target + rival.mistakeOffset,
+        -TRACK_HALF_WIDTH + .55,
+        TRACK_HALF_WIDTH - .55,
+      );
+      rival.behavior = plan.behavior;
+      if (Math.abs(rival.targetLine - previousTarget) > 1.15) rival.lineChanges += 1;
+      rival.decisionTimer = .18 + (1.18 - level.reaction * .55)
+        + hash(index + state.elapsed) * .28;
     }
 
     rival.boostTimer -= dt;
     rival.boostLeft = Math.max(0, (rival.boostLeft || 0) - dt);
+    const lapsRemaining = Math.max(
+      0,
+      state.totalLaps - Math.floor(Math.max(0, rival.progress) / LAP_LENGTH) - 1,
+    );
+    const nitroReserve = finalLap ? 7 : 14 + lapsRemaining * 4;
+    const closingOpportunity = ahead
+      && ahead.gap < 24
+      && rival.speed > ahead.speed - 4;
+    const cornerExit = corner.current > .3 && corner.exit < corner.current * .72;
+    const boostOpportunity = cornerSeverity < .35
+      && (closingOpportunity || cornerExit || profile.archetype === "HOLESHOT" && state.elapsed < 5);
     if (
       rival.boostTimer <= 0
-      && rival.nitro > (profile.archetype === "COMEBACK" && finalLap ? 14 : 22)
+      && rival.nitro > nitroReserve
       && state.elapsed > 1.5
-      && cornerSeverity < .38
-      && (!ahead || ahead.gap < 24 || rival.progress < state.distance)
+      && boostOpportunity
     ) {
-      rival.boostLeft = (.58 + hash(state.elapsed + index) * .68)
+      rival.boostLeft = (.52 + hash(state.elapsed + index) * .72)
         * profile.boost
         * level.attack;
-      rival.boostTimer = 3.5 + hash(index * 4 + state.elapsed) * (4.9 - profile.aggression);
+      rival.boostTimer = 3.15 + hash(index * 4 + state.elapsed) * (4.8 - profile.aggression);
     }
     rival.boosting = rival.boostLeft > 0;
-    const comebackPace = profile.archetype === "COMEBACK" && finalLap ? 1.008 : 1;
+
+    rival.surfaceChop = clamp(
+      Math.abs(waterSlope(rival.lineX, rival.progress)) * 7
+        + clamp(rival.speed / mode.max, 0, 1.1) * .1,
+      0,
+      1,
+    );
+    const requestedGrip = clamp(
+      .9 + profile.cornering * .11
+        - Math.abs(rival.lateralVelocity) * .018
+        - rival.surfaceChop * .13
+        - (rival.mistakeKind === "oversteer" ? .18 : 0),
+      .44,
+      1,
+    );
+    rival.grip = lerp(rival.grip, requestedGrip, 1 - Math.exp(-dt * 3.1));
+
+    const rhythm = 1 + Math.sin(state.elapsed * (.115 + index * .006) + rival.phase)
+      * (.003 + (1 - level.consistency) * .025);
+    const comebackPace = profile.archetype === "COMEBACK" && finalLap ? 1.006 : 1;
     const racePace = mode.cruise
       * level.pace
       * profile.skill
       * rival.paceNoise
       * rival.focus
+      * rhythm
       * comebackPace;
     const physicalTop = mode.max * (1 + (profile.skill - 1) * .35);
-    const brakingStyle = profile.archetype === "LATE BRAKER" ? .93 : 1;
+    const brakingStyle = profile.archetype === "LATE BRAKER" ? .88 : 1;
     const cornerLoss = cornerSeverity
       * (17.5 / (profile.cornering * level.consistency))
-      * brakingStyle;
+      * (1.04 - rival.grip * .04);
     const lineError = Math.abs(rival.lineX - ideal);
-    const linePenalty = clamp(lineError * 1.45, 0, 7.2);
+    const linePenalty = clamp(lineError * (1.18 + corner.current * .7), 0, 7.8);
+    const lateralPenalty = Math.abs(rival.lateralVelocity) * .48;
+    const surfacePenalty = rival.surfaceChop * 2.25;
     const draft = ahead && ahead.gap > 5 && ahead.gap < 19 && Math.abs(ahead.lineX - rival.lineX) < 1.35
       ? 3.1 + level.reaction * 1.2
       : 0;
     const boostPace = rival.boosting ? 15.5 * profile.boost : 0;
-    const launchLimit = lerp(
-      72,
-      physicalTop,
-      clamp(state.elapsed / (3.1 / profile.launch), 0, 1),
+    const cornerTarget = clamp(
+      racePace - cornerLoss - linePenalty,
+      69,
+      racePace + 3,
     );
-    const cornerLimit = racePace - cornerLoss - linePenalty;
-    rival.targetSpeed = clamp(
-      Math.min(
-        launchLimit,
-        cornerLimit + boostPace + draft,
-      ),
-      62,
-      physicalTop,
+    const speedMs = rival.speed / 3.6;
+    const cornerSpeedMs = cornerTarget / 3.6;
+    const brakingDistance = Math.max(
+      7,
+      (speedMs * speedMs - cornerSpeedMs * cornerSpeedMs) / (2 * 7.2),
+    ) * brakingStyle;
+    const shouldBrake = cornerSeverity > .34
+      && corner.distance < brakingDistance + 7
+      && !(rival.mistakeKind === "late-brake" && corner.distance > 12);
+    rival.braking = shouldBrake;
+    const straightDrive = (1 - cornerSeverity) * (2.3 + profile.aggression * 1.6);
+    let requestedSpeed = racePace
+      + straightDrive
+      + boostPace
+      + draft
+      - linePenalty
+      - lateralPenalty
+      - surfacePenalty;
+    if (shouldBrake) requestedSpeed = Math.min(requestedSpeed, cornerTarget);
+    if (rival.mistakeKind === "hesitation") requestedSpeed -= 8.5;
+    if (rival.mistakeKind === "late-brake" && corner.current > .58) {
+      requestedSpeed -= corner.current * 5.5;
+      rival.grip = Math.max(.46, rival.grip - dt * .42);
+    }
+
+    const reacted = state.elapsed >= rival.startReaction;
+    const launchProgress = reacted
+      ? clamp((state.elapsed - rival.startReaction) / (3 / profile.launch), 0, 1)
+      : 0;
+    const launchLimit = reacted ? lerp(54, physicalTop, launchProgress) : 0;
+    rival.targetSpeed = reacted
+      ? clamp(Math.min(launchLimit, requestedSpeed), 48, physicalTop)
+      : 0;
+    rival.throttle = lerp(
+      rival.throttle,
+      clamp((rival.targetSpeed - rival.speed) / 24 + (rival.boosting ? .35 : .58), 0, 1),
+      1 - Math.exp(-dt * (3.4 + level.reaction)),
     );
     rival.speed = lerp(
       rival.speed,
       rival.targetSpeed,
-      1 - Math.exp(-dt * (1.02 + level.reaction * .42 + profile.launch * .2)),
+      1 - Math.exp(-dt * (
+        rival.targetSpeed > rival.speed
+          ? .86 + level.reaction * .38 + profile.launch * .26
+          : shouldBrake
+            ? 3.25
+            : 1.85
+      )),
     );
     if (rival.boosting) rival.nitro = Math.max(0, rival.nitro - dt * 23);
     else rival.nitro = Math.min(100, rival.nitro + dt * 1.9);
@@ -2329,10 +2561,11 @@ function updateRivals(dt) {
     }
 
     const lateralAcceleration = (rival.targetLine - rival.lineX)
-      * (2.25 + level.reaction * .82)
-      - rival.lateralVelocity * (2.55 + level.consistency);
+      * (2.15 + level.reaction * .78)
+      * (.38 + rival.grip * .62)
+      - rival.lateralVelocity * (2.5 + level.consistency + rival.grip * .32);
     rival.lateralVelocity += lateralAcceleration * dt;
-    const maxLateral = 5.2 + level.reaction * 1.7;
+    const maxLateral = (5 + level.reaction * 1.65) * (.66 + rival.grip * .34);
     rival.lateralVelocity = clamp(rival.lateralVelocity, -maxLateral, maxLateral);
     rival.lineX = clamp(
       rival.lineX + rival.lateralVelocity * dt,
@@ -2362,6 +2595,21 @@ function updateRivals(dt) {
       rival.obstacleCooldown = 1.3;
       rival.obstacleHits += 1;
       rival.behavior = "recovering";
+    }
+
+    const rivalContact = rival.collisionCooldown <= 0 && rivals.find((other) => (
+      other !== rival
+      && Math.abs(other.progress - rival.progress) < 1.35
+      && Math.abs(other.lineX - rival.lineX) < .82
+    ));
+    if (rivalContact) {
+      const direction = Math.sign(rival.lineX - rivalContact.lineX || (index % 2 ? 1 : -1));
+      rival.speed *= .965;
+      rival.lateralVelocity += direction * 1.1;
+      rivalContact.lateralVelocity -= direction * .72;
+      rival.collisionCooldown = .72;
+      rivalContact.collisionCooldown = Math.max(rivalContact.collisionCooldown || 0, .55);
+      rival.behavior = "side-by-side";
     }
 
     const relativeMetres = rival.progress - state.distance;
@@ -2925,11 +3173,27 @@ function bindControl(button) {
   button.addEventListener("pointerdown", (event) => set(true, event));
   button.addEventListener("pointerup", (event) => set(false, event));
   button.addEventListener("pointercancel", (event) => set(false, event));
+  button.addEventListener("contextmenu", (event) => event.preventDefault());
+  button.addEventListener("dragstart", (event) => event.preventDefault());
   button.addEventListener("lostpointercapture", () => {
     state.keys[control] = false;
     button.classList.remove("active");
   });
 }
+
+function preventGameGesture(event) {
+  if (event.target.closest("#game, #hud, #touchControls, #countdown, #raceIntro")) {
+    event.preventDefault();
+  }
+}
+
+["contextmenu", "selectstart", "dragstart"].forEach((eventName) => {
+  document.addEventListener(eventName, preventGameGesture);
+});
+document.addEventListener("gesturestart", preventGameGesture, { passive: false });
+document.addEventListener("touchmove", (event) => {
+  if (event.target.closest("#touchControls")) event.preventDefault();
+}, { passive: false });
 
 const keyMap = {
   ArrowLeft: "left",
@@ -3047,6 +3311,12 @@ window.__WGP_DEBUG__ = {
       lineX: rival.lineX,
       behavior: rival.behavior,
       boosting: rival.boosting,
+      braking: rival.braking,
+      grip: rival.grip,
+      throttle: rival.throttle,
+      mistake: rival.mistakeKind,
+      lineChanges: rival.lineChanges,
+      passesAttempted: rival.passesAttempted,
       obstacleHits: rival.obstacleHits,
     })),
   }),

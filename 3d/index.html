@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#06101c">
-  <meta name="description" content="WGP#1 Championship Racing 3.0 — a cinematic WebGL closed-course water racing experience">
-  <title>WGP#1 — Championship Racing 3.0</title>
+  <meta name="description" content="WGP#1 Championship Racing 3.1 — a cinematic WebGL closed-course water racing experience">
+  <title>WGP#1 — Championship Racing 3.1</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -25,7 +25,7 @@
   <header class="topbar">
     <div class="brand">
       <strong>WGP<span>#1</span></strong>
-      <small>CHAMPIONSHIP RACING 3.0</small>
+      <small>CHAMPIONSHIP RACING 3.1</small>
     </div>
     <div class="venue"><i></i>PATTAYA · THAILAND</div>
     <button id="soundToggle" class="icon-button sound-button" aria-label="Mute sound" aria-pressed="false">♫</button>
@@ -34,11 +34,11 @@
 
   <section id="startScreen" class="screen start-screen">
     <div class="hero-copy">
-      <p class="eyebrow">WGP#1 WORLD SERIES · RACE WEEKEND 3.0</p>
+      <p class="eyebrow">WGP#1 WORLD SERIES · RACE WEEKEND 3.1</p>
       <h1>MASTER<br><em>THE WATER.</em></h1>
       <p class="intro">การแข่งขันแบบ Circuit หลายรอบ พร้อมกติกา Checkpoint, Lap Timing และ AI 8 นักแข่งที่วางแผนบุก ป้องกัน และแซงตามสถานการณ์จริง</p>
       <div class="feature-row">
-        <span>CLOSED-COURSE RACING</span><span>HYDRO PHYSICS</span><span>8-RIDER AI</span><span>BROADCAST PRESENTATION</span>
+        <span>CLOSED-COURSE RACING</span><span>HYDRO PHYSICS</span><span>HUMAN RACECRAFT AI</span><span>BROADCAST PRESENTATION</span>
       </div>
     </div>
 
@@ -204,12 +204,12 @@
 
   <div id="touchControls" class="touch-controls hidden">
     <div class="steer">
-      <button data-control="left" aria-label="Steer left">‹</button>
-      <button data-control="right" aria-label="Steer right">›</button>
+      <button type="button" data-control="left" aria-label="Steer left" draggable="false">‹</button>
+      <button type="button" data-control="right" aria-label="Steer right" draggable="false">›</button>
     </div>
     <div class="actions">
-      <button data-control="brake"><small>BRAKE</small></button>
-      <button data-control="nitro" class="boost"><small>NITRO</small></button>
+      <button type="button" data-control="brake" aria-label="Brake" draggable="false"><small>BRAKE</small></button>
+      <button type="button" data-control="nitro" class="boost" aria-label="Nitro" draggable="false"><small>NITRO</small></button>
     </div>
   </div>
 
