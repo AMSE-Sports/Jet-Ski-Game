@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#06101c">
-  <meta name="description" content="WGP#1 Web 3D water racing prototype">
-  <title>WGP#1 — 3D Water Racing</title>
+  <meta name="description" content="WGP#1 Championship 3D water racing experience">
+  <title>WGP#1 — Championship Racing</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -18,6 +18,8 @@
     <i class="speed-vignette"></i>
     <i class="water-drops"></i>
     <i class="impact-flash"></i>
+    <i class="lens-glare"></i>
+    <i class="film-grain"></i>
   </div>
 
   <header class="topbar">
@@ -26,16 +28,17 @@
       <small>3D WATER RACING</small>
     </div>
     <div class="venue"><i></i>PATTAYA · THAILAND</div>
+    <button id="soundToggle" class="icon-button sound-button" aria-label="Mute sound" aria-pressed="false">♫</button>
     <button id="fullscreen" class="icon-button" aria-label="Full screen">⛶</button>
   </header>
 
   <section id="startScreen" class="screen start-screen">
     <div class="hero-copy">
-      <p class="eyebrow">WEB 3D RACING EXPERIENCE</p>
-      <h1>RIDE<br><em>THE LIMIT.</em></h1>
-      <p class="intro">ลงแข่งกับนักบิด AI ระดับมืออาชีพในสนาม WGP#1 แบบ 3D เลือกตัวละคร ฝ่าคลื่น แซงคู่แข่ง และรักษาไลน์เพื่อขึ้นโพเดียม</p>
+      <p class="eyebrow">CHAMPIONSHIP RACING · PHYSICS 2.0</p>
+      <h1>MASTER<br><em>THE WATER.</em></h1>
+      <p class="intro">สนามโค้งเต็มรูปแบบ ฟิสิกส์ตัวเรือและคลื่นที่มีน้ำหนักจริง พร้อมคู่แข่ง AI ที่อ่านไลน์ เบรก บุก ป้องกัน และใช้จังหวะแซงอย่างเป็นระบบ</p>
       <div class="feature-row">
-        <span>6 RIDERS</span><span>LIVE RACE ORDER</span><span>CINEMATIC WATER FX</span>
+        <span>DYNAMIC RACING LINE</span><span>HYDRO PHYSICS</span><span>WORLD-CLASS AI</span><span>SPATIAL ENGINE AUDIO</span>
       </div>
     </div>
 
@@ -134,9 +137,23 @@
       <div><small id="modeLabel">TIME ATTACK</small><strong id="distanceLabel">0.00 / 3.00 KM</strong></div>
       <div class="course-bar"><i id="courseBar"></i></div>
     </div>
+    <div class="telemetry" aria-label="Racing telemetry">
+      <div><small>GRIP</small><strong id="gripValue">100%</strong></div>
+      <div><small>G-FORCE</small><strong id="gForceValue">0.0 G</strong></div>
+      <div><small>SURFACE</small><strong id="surfaceValue">CALM</strong></div>
+    </div>
+    <div id="turnCue" class="turn-cue straight" aria-live="polite">
+      <span id="turnArrow">↑</span>
+      <div><small>RACING LINE</small><strong id="turnLabel">STRAIGHT</strong></div>
+    </div>
     <aside class="standings" aria-label="Live race order">
       <header><span>LIVE RACE ORDER</span><b id="positionBadge">P1</b></header>
       <ol id="standingsList"></ol>
+    </aside>
+    <aside id="raceRadar" class="race-radar" aria-label="Nearby rivals">
+      <span class="radar-player"></span>
+      <i class="radar-lane left"></i><i class="radar-lane right"></i>
+      <div id="radarRivals"></div>
     </aside>
     <div id="callout" class="callout">PERFECT GATE +500</div>
     <div class="nitro">
@@ -187,6 +204,14 @@
     </div>
   </section>
 
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.min.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"
+      }
+    }
+  </script>
   <script type="module" src="./game3d.js"></script>
 </body>
 </html>
