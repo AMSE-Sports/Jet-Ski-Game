@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#06101c">
+  <meta name="description" content="WGP#1 Web 3D water racing prototype">
+  <title>WGP#1 — 3D Water Racing</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div id="game" aria-label="WGP#1 3D racing game"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <strong>WGP<span>#1</span></strong>
+      <small>3D WATER RACING</small>
+    </div>
+    <div class="venue"><i></i>PATTAYA · THAILAND</div>
+    <button id="fullscreen" class="icon-button" aria-label="Full screen">⛶</button>
+  </header>
+
+  <section id="startScreen" class="screen start-screen">
+    <div class="hero-copy">
+      <p class="eyebrow">WEB 3D RACING EXPERIENCE</p>
+      <h1>RIDE<br><em>THE LIMIT.</em></h1>
+      <p class="intro">สัมผัสสนาม WGP#1 ในมุมกล้องไล่หลัง บังคับซ้าย–ขวาจริง ฝ่าคลื่น เก็บ Boost Gate และทำเวลาให้ดีที่สุด</p>
+      <div class="feature-row">
+        <span>CHASE CAMERA</span><span>DYNAMIC OCEAN</span><span>ARCADE PHYSICS</span>
+      </div>
+    </div>
+
+    <form id="raceSetup" class="setup-card">
+      <p class="step">RACE CONFIGURATION</p>
+      <h2>ENTER<br>THE WATER</h2>
+      <label class="text-label" for="playerName">RIDER NAME</label>
+      <input id="playerName" maxlength="14" value="WGP RIDER" autocomplete="off">
+
+      <fieldset>
+        <legend>RACE MODE</legend>
+        <div class="options modes">
+          <label><input type="radio" name="mode" value="time" checked><span><b>TIME ATTACK</b><small>สมดุลและทำเวลา</small></span></label>
+          <label><input type="radio" name="mode" value="sprint"><span><b>SPRINT</b><small>ความเร็วสูงสุด</small></span></label>
+          <label><input type="radio" name="mode" value="precision"><span><b>PRECISION</b><small>ประตูแคบ คะแนนสูง</small></span></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>COURSE DISTANCE</legend>
+        <div class="options distances">
+          <label><input type="radio" name="distance" value="1000"><span><b>1 KM</b><small>QUICK</small></span></label>
+          <label><input type="radio" name="distance" value="3000" checked><span><b>3 KM</b><small>STANDARD</small></span></label>
+          <label><input type="radio" name="distance" value="5000"><span><b>5 KM</b><small>ENDURANCE</small></span></label>
+        </div>
+      </fieldset>
+
+      <div class="setup-footer">
+        <label class="quality">QUALITY
+          <select id="quality">
+            <option value="auto">AUTO</option>
+            <option value="high">HIGH</option>
+            <option value="low">LOW</option>
+          </select>
+        </label>
+        <button class="start-button" type="submit">START RACE <span>→</span></button>
+      </div>
+      <p id="webglNotice" class="notice" hidden>อุปกรณ์นี้ไม่รองรับ WebGL กรุณาใช้เบราว์เซอร์เวอร์ชันล่าสุด</p>
+    </form>
+  </section>
+
+  <section id="loadingScreen" class="screen loading-screen hidden" aria-live="polite">
+    <div class="loading-mark">WGP<span>#1</span></div>
+    <p>BUILDING THE COURSE</p>
+    <div class="loader"><i id="loadingBar"></i></div>
+    <strong id="loadingValue">0%</strong>
+  </section>
+
+  <section id="hud" class="hud hidden">
+    <div class="race-info">
+      <div><small>SPEED</small><strong><span id="speed">0</span><i>KM/H</i></strong></div>
+      <div><small>POSITION</small><strong><span id="position">1</span><i>/ 4</i></strong></div>
+      <div><small>TIME</small><strong id="timer">00:00.000</strong></div>
+    </div>
+    <div class="course-info">
+      <div><small id="modeLabel">TIME ATTACK</small><strong id="distanceLabel">0.00 / 3.00 KM</strong></div>
+      <div class="course-bar"><i id="courseBar"></i></div>
+    </div>
+    <div id="callout" class="callout">PERFECT GATE +500</div>
+    <div class="nitro">
+      <div><small>NITRO</small><strong id="nitroValue">70%</strong></div>
+      <div class="nitro-bar"><i id="nitroBar"></i></div>
+    </div>
+    <button id="pause" class="pause-button" aria-label="Pause">Ⅱ</button>
+  </section>
+
+  <div id="countdown" class="countdown hidden">3</div>
+  <div id="rotateNotice" class="rotate-notice">
+    <span>↻</span><strong>ROTATE YOUR DEVICE</strong><small>เล่นในแนวนอนเพื่อควบคุมได้ดีที่สุด</small>
+  </div>
+
+  <div id="touchControls" class="touch-controls hidden">
+    <div class="steer">
+      <button data-control="left" aria-label="Steer left">‹</button>
+      <button data-control="right" aria-label="Steer right">›</button>
+    </div>
+    <div class="actions">
+      <button data-control="brake"><small>BRAKE</small></button>
+      <button data-control="nitro" class="boost"><small>NITRO</small></button>
+    </div>
+  </div>
+
+  <section id="pauseScreen" class="screen dialog hidden">
+    <div>
+      <p class="eyebrow">RACE PAUSED</p>
+      <h2>HOLD<br>YOUR LINE.</h2>
+      <button id="resume" class="start-button">RESUME <span>→</span></button>
+      <button id="restartFromPause" class="secondary-button">RESTART RACE</button>
+      <button id="exitRace" class="text-button">EXIT TO MENU</button>
+    </div>
+  </section>
+
+  <section id="resultScreen" class="screen dialog hidden">
+    <div class="result-card">
+      <p class="eyebrow">COURSE COMPLETE</p>
+      <h2 id="resultTitle">WATER<br>CONQUERED.</h2>
+      <div class="result-grid">
+        <div><small>FINAL TIME</small><strong id="finalTime">00:00.000</strong></div>
+        <div><small>TOP SPEED</small><strong><span id="topSpeed">0</span> KM/H</strong></div>
+        <div><small>GATES</small><strong id="gateScore">0 / 0</strong></div>
+        <div><small>POSITION</small><strong id="finalPosition">1 / 4</strong></div>
+      </div>
+      <button id="raceAgain" class="start-button">RACE AGAIN <span>→</span></button>
+      <button id="backToMenu" class="secondary-button">CHANGE SETUP</button>
+    </div>
+  </section>
+
+  <script type="module" src="./game3d.js"></script>
+</body>
+</html>
