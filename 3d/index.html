@@ -13,6 +13,12 @@
 </head>
 <body>
   <div id="game" aria-label="WGP#1 3D racing game"></div>
+  <div id="cinematicFx" class="cinematic-fx" aria-hidden="true">
+    <i class="speed-lines"></i>
+    <i class="speed-vignette"></i>
+    <i class="water-drops"></i>
+    <i class="impact-flash"></i>
+  </div>
 
   <header class="topbar">
     <div class="brand">
@@ -27,9 +33,9 @@
     <div class="hero-copy">
       <p class="eyebrow">WEB 3D RACING EXPERIENCE</p>
       <h1>RIDE<br><em>THE LIMIT.</em></h1>
-      <p class="intro">สัมผัสสนาม WGP#1 ในมุมกล้องไล่หลัง บังคับซ้าย–ขวาจริง ฝ่าคลื่น เก็บ Boost Gate และทำเวลาให้ดีที่สุด</p>
+      <p class="intro">ลงแข่งกับนักบิด AI ระดับมืออาชีพในสนาม WGP#1 แบบ 3D เลือกตัวละคร ฝ่าคลื่น แซงคู่แข่ง และรักษาไลน์เพื่อขึ้นโพเดียม</p>
       <div class="feature-row">
-        <span>CHASE CAMERA</span><span>DYNAMIC OCEAN</span><span>ARCADE PHYSICS</span>
+        <span>6 RIDERS</span><span>LIVE RACE ORDER</span><span>CINEMATIC WATER FX</span>
       </div>
     </div>
 
@@ -38,6 +44,39 @@
       <h2>ENTER<br>THE WATER</h2>
       <label class="text-label" for="playerName">RIDER NAME</label>
       <input id="playerName" maxlength="14" value="WGP RIDER" autocomplete="off">
+
+      <fieldset class="rider-fieldset">
+        <legend>SELECT RIDER</legend>
+        <div class="rider-options">
+          <label>
+            <input type="radio" name="rider" value="blaze" checked>
+            <span class="rider-card blaze">
+              <i class="rider-portrait"><u></u></i>
+              <b>BLAZE RYU</b>
+              <small>POWER · NITRO</small>
+              <em><u style="--stat: 92%"></u><u style="--stat: 72%"></u></em>
+            </span>
+          </label>
+          <label>
+            <input type="radio" name="rider" value="nova">
+            <span class="rider-card nova">
+              <i class="rider-portrait"><u></u></i>
+              <b>NOVA KAI</b>
+              <small>BALANCED · AGILE</small>
+              <em><u style="--stat: 84%"></u><u style="--stat: 86%"></u></em>
+            </span>
+          </label>
+          <label>
+            <input type="radio" name="rider" value="tide">
+            <span class="rider-card tide">
+              <i class="rider-portrait"><u></u></i>
+              <b>TIDE VEGA</b>
+              <small>CONTROL · STABLE</small>
+              <em><u style="--stat: 76%"></u><u style="--stat: 96%"></u></em>
+            </span>
+          </label>
+        </div>
+      </fieldset>
 
       <fieldset>
         <legend>RACE MODE</legend>
@@ -58,6 +97,13 @@
       </fieldset>
 
       <div class="setup-footer">
+        <label class="quality">AI LEVEL
+          <select id="difficulty">
+            <option value="sport">SPORT</option>
+            <option value="pro" selected>PRO</option>
+            <option value="elite">WORLD CLASS</option>
+          </select>
+        </label>
         <label class="quality">QUALITY
           <select id="quality">
             <option value="auto">AUTO</option>
@@ -81,13 +127,17 @@
   <section id="hud" class="hud hidden">
     <div class="race-info">
       <div><small>SPEED</small><strong><span id="speed">0</span><i>KM/H</i></strong></div>
-      <div><small>POSITION</small><strong><span id="position">1</span><i>/ 4</i></strong></div>
+      <div id="positionPanel"><small>POSITION</small><strong><span id="position">1</span><i>/ <span id="positionTotal">6</span></i></strong></div>
       <div><small>TIME</small><strong id="timer">00:00.000</strong></div>
     </div>
     <div class="course-info">
       <div><small id="modeLabel">TIME ATTACK</small><strong id="distanceLabel">0.00 / 3.00 KM</strong></div>
       <div class="course-bar"><i id="courseBar"></i></div>
     </div>
+    <aside class="standings" aria-label="Live race order">
+      <header><span>LIVE RACE ORDER</span><b id="positionBadge">P1</b></header>
+      <ol id="standingsList"></ol>
+    </aside>
     <div id="callout" class="callout">PERFECT GATE +500</div>
     <div class="nitro">
       <div><small>NITRO</small><strong id="nitroValue">70%</strong></div>
@@ -130,7 +180,7 @@
         <div><small>FINAL TIME</small><strong id="finalTime">00:00.000</strong></div>
         <div><small>TOP SPEED</small><strong><span id="topSpeed">0</span> KM/H</strong></div>
         <div><small>GATES</small><strong id="gateScore">0 / 0</strong></div>
-        <div><small>POSITION</small><strong id="finalPosition">1 / 4</strong></div>
+        <div><small>POSITION</small><strong id="finalPosition">1 / 6</strong></div>
       </div>
       <button id="raceAgain" class="start-button">RACE AGAIN <span>→</span></button>
       <button id="backToMenu" class="secondary-button">CHANGE SETUP</button>
