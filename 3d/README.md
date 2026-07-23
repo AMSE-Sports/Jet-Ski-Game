@@ -1,33 +1,62 @@
-# WGP#1 Championship Racing · Physics 2.0
+# WGP#1 Championship Racing 3.0
 
-A browser-based Three.js/WebGL water-racing game with curved-course
-hydrodynamics, tactical rivals, and scalable cinematic rendering.
+A browser-based Three.js/WebGL closed-course water-racing game with
+hydrodynamic handling, tactical eight-rider AI, lap timing, official race
+rules, and broadcast-style presentation.
 
 ## Controls
 
-- Desktop: `A/D` or left/right arrows to steer, `S` or down arrow to brake, `Shift` or `Space` for Nitro, and `P` or `Esc` to pause.
-- Touch: left/right steering buttons plus Brake and Nitro. Landscape orientation is recommended.
+- Desktop: `A/D` or left/right arrows to steer, `S` or down arrow to brake,
+  `Shift` or `Space` for Nitro, and `P` or `Esc` to pause.
+- Touch: left/right steering buttons plus Brake and Nitro. Landscape
+  orientation is recommended.
 
-## Features
+## Race weekend
 
-- Three selectable stylized 3D riders with different handling, boost, and stability characteristics
-- Six-rider near-abreast starts with Sport, Pro, and World Class AI difficulty
-- Rival acceleration, racing-line selection, slipstreaming, defending, overtakes, Nitro strategy, contact, and distance-accurate placement
-- Fair AI physics: rivals can miss an avoidance decision, strike a buoy, lose momentum, and recover just like the player
-- Curved course geometry with predictive turn calls, centrifugal load, hydrodynamic grip, water chop, edge drag, and wave-driven launch/landing
-- Live six-rider order, leader gaps, overtake feedback, and floating position labels for rivals ahead
-- Detailed procedural jet skis, articulated riders, helmets, suits, buoys, ramps, gates, venue arch, officials' boats, crowd, palms, flags, clouds, and shoreline
-- Multi-wave shader ocean with Fresnel reflection, crest foam, sun sparkle, animated sky, soft fog, and cinematic tone mapping
-- PBR clear-coat vehicles, generated environment reflections, bloom on supported hardware, and an automatic software-renderer fallback
-- Chase-camera lean, impact shake, speed vignette, Nitro trails, wake sheets, circular spray droplets, and water-on-lens effects
-- Procedural engine, wind, boost, impact, and landing audio with a dedicated mute control
-- Grip, G-force, water-surface, racing-line, and proximity-radar telemetry
-- Time Attack, Sprint, and Precision modes
-- 1 km, 3 km, and 5 km course options
-- Automatic, High, and Low graphics quality
-- Responsive desktop, phone, and tablet interfaces
+- A repeatable 920 m Pattaya circuit with two-, three-, and five-lap formats
+- Championship, Arcade Sprint, and Technical Cup handling/rules presets
+- Three race conditions: Race Day, Golden Hour, and Heavy Chop
+- Sector checkpoints, missed-checkpoint penalties, lap times, best lap,
+  final-lap call, and chequered-flag sequence
+- Eight-rider starting grid, live classification, proximity radar, circuit
+  map, official results, and a three-rider podium
+- Broadcast opening card, race-control banners, countdown tones, overtake
+  feedback, and position-change treatment
 
-The production 2D game remains at the repository root. This prototype is isolated under `/3d/`.
+## Riding and AI
+
+- Three selectable riders with distinct power, handling, boost, and stability
+  characteristics
+- Hydrodynamic grip, lateral momentum, centrifugal load, wake effects, water
+  chop, edge drag, launch, landing, and hard-landing momentum loss
+- Seven named rivals with Technical, Holeshot, Smooth, Aggressor, Late Braker,
+  Defender, and Comeback racecraft profiles
+- AI racing-line prediction, apex selection, overtaking, defending, obstacle
+  avoidance, slipstreaming, Nitro management, errors, buoy impacts, and
+  recovery
+- Sport, Pro, and World Class difficulty changes reaction, consistency,
+  line quality, and decisions rather than teleporting rivals or granting
+  hidden catch-up speed
+
+## Rendering and audio
+
+- Detailed procedural jet skis, riders, helmets, suits, buoys, gates, ramps,
+  venue arch, officials' boats, crowds, grandstands, palms, flags, clouds,
+  shoreline, and mountains
+- Multi-wave shader ocean with condition-sensitive wave scale, Fresnel
+  reflection, crest foam, sun sparkle, animated sky, fog, and cinematic tone
+  mapping
+- PBR clear-coat vehicles, generated environment reflections, adaptive bloom,
+  and an automatic software-renderer fallback
+- Chase-camera lean, impact shake, speed vignette, Nitro trails, wake sheets,
+  spray droplets, and water-on-lens effects
+- Procedural engine, wind, boost, impact, landing, countdown, lap, and finish
+  audio with a dedicated mute control
+- Responsive desktop, phone, and tablet interfaces with Auto, High, and Low
+  graphics quality
+
+The production 2D game remains at the repository root. This version is
+isolated under `/3d/`.
 
 ## Third-party assets
 

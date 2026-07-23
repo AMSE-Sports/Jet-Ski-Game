@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#06101c">
-  <meta name="description" content="WGP#1 Championship 3D water racing experience">
-  <title>WGP#1 — Championship Racing</title>
+  <meta name="description" content="WGP#1 Championship Racing 3.0 — a cinematic WebGL closed-course water racing experience">
+  <title>WGP#1 — Championship Racing 3.0</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -25,7 +25,7 @@
   <header class="topbar">
     <div class="brand">
       <strong>WGP<span>#1</span></strong>
-      <small>3D WATER RACING</small>
+      <small>CHAMPIONSHIP RACING 3.0</small>
     </div>
     <div class="venue"><i></i>PATTAYA · THAILAND</div>
     <button id="soundToggle" class="icon-button sound-button" aria-label="Mute sound" aria-pressed="false">♫</button>
@@ -34,11 +34,11 @@
 
   <section id="startScreen" class="screen start-screen">
     <div class="hero-copy">
-      <p class="eyebrow">CHAMPIONSHIP RACING · PHYSICS 2.0</p>
+      <p class="eyebrow">WGP#1 WORLD SERIES · RACE WEEKEND 3.0</p>
       <h1>MASTER<br><em>THE WATER.</em></h1>
-      <p class="intro">สนามโค้งเต็มรูปแบบ ฟิสิกส์ตัวเรือและคลื่นที่มีน้ำหนักจริง พร้อมคู่แข่ง AI ที่อ่านไลน์ เบรก บุก ป้องกัน และใช้จังหวะแซงอย่างเป็นระบบ</p>
+      <p class="intro">การแข่งขันแบบ Circuit หลายรอบ พร้อมกติกา Checkpoint, Lap Timing และ AI 8 นักแข่งที่วางแผนบุก ป้องกัน และแซงตามสถานการณ์จริง</p>
       <div class="feature-row">
-        <span>DYNAMIC RACING LINE</span><span>HYDRO PHYSICS</span><span>WORLD-CLASS AI</span><span>SPATIAL ENGINE AUDIO</span>
+        <span>CLOSED-COURSE RACING</span><span>HYDRO PHYSICS</span><span>8-RIDER AI</span><span>BROADCAST PRESENTATION</span>
       </div>
     </div>
 
@@ -82,20 +82,20 @@
       </fieldset>
 
       <fieldset>
-        <legend>RACE MODE</legend>
+        <legend>RACE FORMAT</legend>
         <div class="options modes">
-          <label><input type="radio" name="mode" value="time" checked><span><b>TIME ATTACK</b><small>สมดุลและทำเวลา</small></span></label>
-          <label><input type="radio" name="mode" value="sprint"><span><b>SPRINT</b><small>ความเร็วสูงสุด</small></span></label>
-          <label><input type="radio" name="mode" value="precision"><span><b>PRECISION</b><small>ประตูแคบ คะแนนสูง</small></span></label>
+          <label><input type="radio" name="mode" value="sprint" checked><span><b>CHAMPIONSHIP</b><small>กติกาแข่งขันเต็มรูปแบบ</small></span></label>
+          <label><input type="radio" name="mode" value="time"><span><b>ARCADE SPRINT</b><small>Nitro และ Ramp มากขึ้น</small></span></label>
+          <label><input type="radio" name="mode" value="precision"><span><b>TECHNICAL CUP</b><small>Checkpoint เข้มงวด</small></span></label>
         </div>
       </fieldset>
 
       <fieldset>
-        <legend>COURSE DISTANCE</legend>
+        <legend>RACE LENGTH</legend>
         <div class="options distances">
-          <label><input type="radio" name="distance" value="1000"><span><b>1 KM</b><small>QUICK</small></span></label>
-          <label><input type="radio" name="distance" value="3000" checked><span><b>3 KM</b><small>STANDARD</small></span></label>
-          <label><input type="radio" name="distance" value="5000"><span><b>5 KM</b><small>ENDURANCE</small></span></label>
+          <label><input type="radio" name="laps" value="2"><span><b>2 LAPS</b><small>SPRINT</small></span></label>
+          <label><input type="radio" name="laps" value="3" checked><span><b>3 LAPS</b><small>GRAND PRIX</small></span></label>
+          <label><input type="radio" name="laps" value="5"><span><b>5 LAPS</b><small>ENDURANCE</small></span></label>
         </div>
       </fieldset>
 
@@ -105,6 +105,13 @@
             <option value="sport">SPORT</option>
             <option value="pro" selected>PRO</option>
             <option value="elite">WORLD CLASS</option>
+          </select>
+        </label>
+        <label class="quality">CONDITIONS
+          <select id="conditions">
+            <option value="race" selected>RACE DAY</option>
+            <option value="golden">GOLDEN HOUR</option>
+            <option value="storm">HEAVY CHOP</option>
           </select>
         </label>
         <label class="quality">QUALITY
@@ -130,11 +137,12 @@
   <section id="hud" class="hud hidden">
     <div class="race-info">
       <div><small>SPEED</small><strong><span id="speed">0</span><i>KM/H</i></strong></div>
-      <div id="positionPanel"><small>POSITION</small><strong><span id="position">1</span><i>/ <span id="positionTotal">6</span></i></strong></div>
+      <div id="positionPanel"><small>POSITION</small><strong><span id="position">1</span><i>/ <span id="positionTotal">8</span></i></strong></div>
+      <div id="lapPanel"><small>LAP</small><strong><span id="currentLap">1</span><i>/ <span id="totalLaps">3</span></i></strong></div>
       <div><small>TIME</small><strong id="timer">00:00.000</strong></div>
     </div>
     <div class="course-info">
-      <div><small id="modeLabel">TIME ATTACK</small><strong id="distanceLabel">0.00 / 3.00 KM</strong></div>
+      <div><small id="modeLabel">CHAMPIONSHIP</small><strong id="distanceLabel">LAP 1 · SECTOR 1</strong></div>
       <div class="course-bar"><i id="courseBar"></i></div>
     </div>
     <div class="telemetry" aria-label="Racing telemetry">
@@ -155,6 +163,15 @@
       <i class="radar-lane left"></i><i class="radar-lane right"></i>
       <div id="radarRivals"></div>
     </aside>
+    <aside class="circuit-map" aria-label="Pattaya course map">
+      <header><span>PATTAYA CIRCUIT</span><b id="sectorLabel">S1</b></header>
+      <svg viewBox="0 0 180 118" role="img" aria-label="Live circuit positions">
+        <path class="map-shadow" d="M24 76 C12 46 34 17 72 20 C101 6 149 20 158 49 C169 76 143 104 110 94 C83 112 40 104 24 76 Z"></path>
+        <path id="mapTrack" d="M24 76 C12 46 34 17 72 20 C101 6 149 20 158 49 C169 76 143 104 110 94 C83 112 40 104 24 76 Z"></path>
+        <g id="mapRivals"></g>
+        <circle id="mapPlayer" class="map-player" r="4"></circle>
+      </svg>
+    </aside>
     <div id="callout" class="callout">PERFECT GATE +500</div>
     <div class="nitro">
       <div><small>NITRO</small><strong id="nitroValue">70%</strong></div>
@@ -162,6 +179,23 @@
     </div>
     <button id="pause" class="pause-button" aria-label="Pause">Ⅱ</button>
   </section>
+
+  <section id="raceIntro" class="race-intro hidden" aria-live="polite">
+    <div class="broadcast-card">
+      <p>WGP#1 WORLD SERIES · PATTAYA</p>
+      <div class="broadcast-title">
+        <span>ROUND 1</span>
+        <h2>STARTING<br>GRID</h2>
+        <strong id="introConditions">RACE DAY · 3 LAPS</strong>
+      </div>
+      <ol id="startingGrid"></ol>
+      <footer><span>8 RIDERS</span><span>920 M CIRCUIT</span><span id="introDifficulty">PRO AI</span></footer>
+    </div>
+  </section>
+  <div id="raceBanner" class="race-banner hidden" aria-live="polite">
+    <small id="raceBannerKicker">RACE CONTROL</small>
+    <strong id="raceBannerTitle">FINAL LAP</strong>
+  </div>
 
   <div id="countdown" class="countdown hidden">3</div>
   <div id="rotateNotice" class="rotate-notice">
@@ -190,14 +224,17 @@
   </section>
 
   <section id="resultScreen" class="screen dialog hidden">
-    <div class="result-card">
-      <p class="eyebrow">COURSE COMPLETE</p>
+      <div class="result-card">
+      <p class="eyebrow">OFFICIAL RACE RESULT</p>
       <h2 id="resultTitle">WATER<br>CONQUERED.</h2>
+      <ol id="podiumList" class="podium-list"></ol>
       <div class="result-grid">
         <div><small>FINAL TIME</small><strong id="finalTime">00:00.000</strong></div>
         <div><small>TOP SPEED</small><strong><span id="topSpeed">0</span> KM/H</strong></div>
-        <div><small>GATES</small><strong id="gateScore">0 / 0</strong></div>
-        <div><small>POSITION</small><strong id="finalPosition">1 / 6</strong></div>
+        <div><small>BEST LAP</small><strong id="bestLap">--:--.---</strong></div>
+        <div><small>PENALTY</small><strong id="penaltyTime">+0.000 S</strong></div>
+        <div><small>CHECKPOINTS</small><strong id="gateScore">0 / 0</strong></div>
+        <div><small>POSITION</small><strong id="finalPosition">1 / 8</strong></div>
       </div>
       <button id="raceAgain" class="start-button">RACE AGAIN <span>→</span></button>
       <button id="backToMenu" class="secondary-button">CHANGE SETUP</button>

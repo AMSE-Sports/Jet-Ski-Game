@@ -27,6 +27,9 @@ const ui = {
   positionTotal: $("#positionTotal"),
   positionPanel: $("#positionPanel"),
   positionBadge: $("#positionBadge"),
+  currentLap: $("#currentLap"),
+  totalLaps: $("#totalLaps"),
+  sectorLabel: $("#sectorLabel"),
   standings: $("#standingsList"),
   timer: $("#timer"),
   distance: $("#distanceLabel"),
@@ -37,8 +40,21 @@ const ui = {
   callout: $("#callout"),
   finalTime: $("#finalTime"),
   topSpeed: $("#topSpeed"),
+  bestLap: $("#bestLap"),
+  penaltyTime: $("#penaltyTime"),
   gateScore: $("#gateScore"),
   finalPosition: $("#finalPosition"),
+  podium: $("#podiumList"),
+  raceIntro: $("#raceIntro"),
+  startingGrid: $("#startingGrid"),
+  introConditions: $("#introConditions"),
+  introDifficulty: $("#introDifficulty"),
+  raceBanner: $("#raceBanner"),
+  raceBannerKicker: $("#raceBannerKicker"),
+  raceBannerTitle: $("#raceBannerTitle"),
+  mapTrack: $("#mapTrack"),
+  mapPlayer: $("#mapPlayer"),
+  mapRivals: $("#mapRivals"),
   webglNotice: $("#webglNotice"),
   cinematicFx: $("#cinematicFx"),
   grip: $("#gripValue"),
@@ -53,13 +69,85 @@ const ui = {
 
 const config = {
   time: {
-    label: "TIME ATTACK", cruise: 118, max: 154, acceleration: 1.02, gates: 1, hazards: .95,
+    label: "ARCADE SPRINT",
+    cruise: 133,
+    max: 174,
+    acceleration: 1.1,
+    checkpointWidth: 4.25,
+    penalty: 0,
+    ramps: true,
+    handlingAssist: 1.08,
   },
   sprint: {
-    label: "SPRINT", cruise: 132, max: 170, acceleration: 1.08, gates: .75, hazards: .72,
+    label: "CHAMPIONSHIP",
+    cruise: 126,
+    max: 163,
+    acceleration: 1.02,
+    checkpointWidth: 3.45,
+    penalty: 2,
+    ramps: false,
+    handlingAssist: 1,
   },
   precision: {
-    label: "PRECISION", cruise: 101, max: 138, acceleration: .96, gates: 1.35, hazards: 1.35,
+    label: "TECHNICAL CUP",
+    cruise: 111,
+    max: 148,
+    acceleration: .97,
+    checkpointWidth: 2.8,
+    penalty: 3,
+    ramps: false,
+    handlingAssist: .94,
+  },
+};
+
+const conditionPresets = {
+  race: {
+    label: "RACE DAY",
+    top: "#087ec4",
+    horizon: "#bde9f3",
+    bottom: "#fff0cf",
+    deep: "#012f48",
+    shallow: "#0d8ea5",
+    sun: "#fff0b8",
+    fog: "#8dbbc5",
+    fogDensity: 1,
+    light: "#fff2c6",
+    lightIntensity: 3.5,
+    exposure: 1.12,
+    chop: 1,
+    cloud: 1,
+  },
+  golden: {
+    label: "GOLDEN HOUR",
+    top: "#315f9a",
+    horizon: "#e7a46f",
+    bottom: "#ffd9a1",
+    deep: "#07364e",
+    shallow: "#187f8f",
+    sun: "#ffd38f",
+    fog: "#c89f80",
+    fogDensity: 1.08,
+    light: "#ffd0a0",
+    lightIntensity: 3.15,
+    exposure: 1.08,
+    chop: .96,
+    cloud: 1.15,
+  },
+  storm: {
+    label: "HEAVY CHOP",
+    top: "#263c52",
+    horizon: "#708491",
+    bottom: "#a7a69c",
+    deep: "#041e2c",
+    shallow: "#1b5965",
+    sun: "#d7e4df",
+    fog: "#647b83",
+    fogDensity: 1.36,
+    light: "#b9d3d8",
+    lightIntensity: 2.15,
+    exposure: .92,
+    chop: 1.38,
+    cloud: 1.7,
   },
 };
 
@@ -107,50 +195,74 @@ const riderProfiles = {
 
 const aiLevels = {
   sport: {
-    label: "SPORT", pace: .945, reaction: .76, attack: .72, consistency: .91, errorRate: .052,
+    label: "SPORT", pace: .965, reaction: .76, attack: .72, consistency: .91, errorRate: .052,
   },
   pro: {
-    label: "PRO", pace: .995, reaction: 1, attack: 1, consistency: .965, errorRate: .02,
+    label: "PRO", pace: 1.02, reaction: 1, attack: 1, consistency: .965, errorRate: .02,
   },
   elite: {
-    label: "WORLD CLASS", pace: 1.025, reaction: 1.18, attack: 1.12, consistency: .992, errorRate: .005,
+    label: "WORLD CLASS", pace: 1.055, reaction: 1.18, attack: 1.12, consistency: .992, errorRate: .005,
   },
 };
 
 const rivalProfiles = [
   {
     name: "MIRA STORM", primary: "#1769e8", secondary: "#f5f7f9", suit: "#16263f", accent: "#5be8ff", skin: "#c88762",
-    skill: .995, aggression: .72, cornering: 1.04, launch: .98, boost: .97, defense: .88,
+    archetype: "TECHNICAL", skill: .995, aggression: .72, cornering: 1.04, launch: .98, boost: .97, defense: .88,
   },
   {
     name: "RYO VOLT", primary: "#ffd21a", secondary: "#15191f", suit: "#222630", accent: "#fff1a6", skin: "#d1a17c",
-    skill: 1.012, aggression: .84, cornering: .97, launch: 1.06, boost: 1.04, defense: .96,
+    archetype: "HOLESHOT", skill: 1.012, aggression: .84, cornering: .97, launch: 1.06, boost: 1.04, defense: .96,
   },
   {
     name: "LUCA WAVE", primary: "#e82947", secondary: "#f1f2f4", suit: "#253044", accent: "#ff8b9e", skin: "#b97855",
-    skill: 1.002, aggression: .66, cornering: 1.02, launch: 1, boost: 1, defense: .84,
+    archetype: "SMOOTH", skill: 1.002, aggression: .66, cornering: 1.02, launch: 1, boost: 1, defense: .84,
   },
   {
     name: "KAI PHANTOM", primary: "#915cff", secondary: "#151422", suit: "#e8e6f2", accent: "#c6a8ff", skin: "#e0ad82",
-    skill: 1.022, aggression: .91, cornering: 1.01, launch: 1.02, boost: 1.06, defense: 1.06,
+    archetype: "AGGRESSOR", skill: 1.022, aggression: .91, cornering: 1.01, launch: 1.02, boost: 1.06, defense: 1.06,
   },
   {
     name: "AYA SURGE", primary: "#19d592", secondary: "#08231d", suit: "#152d2a", accent: "#a6ffe0", skin: "#c98b66",
-    skill: 1.008, aggression: .77, cornering: 1.06, launch: .97, boost: .98, defense: .94,
+    archetype: "LATE BRAKER", skill: 1.008, aggression: .77, cornering: 1.06, launch: .97, boost: .98, defense: .94,
+  },
+  {
+    name: "NOAH CREST", primary: "#f58a25", secondary: "#111a24", suit: "#e8edf1", accent: "#ffe06b", skin: "#b97b58",
+    archetype: "DEFENDER", skill: 1.006, aggression: .73, cornering: .99, launch: 1.01, boost: .99, defense: 1.09,
+  },
+  {
+    name: "ZARA VORTEX", primary: "#ef4fc6", secondary: "#21152a", suit: "#171e31", accent: "#ffb8ec", skin: "#dca47b",
+    archetype: "COMEBACK", skill: 1.014, aggression: .82, cornering: 1.035, launch: .96, boost: 1.07, defense: .91,
   },
 ];
 
 const WORLD_SCALE = .3312;
 const TRACK_HALF_WIDTH = 8.35;
 const GRAVITY = 9.81;
+const LAP_LENGTH = 920;
+const SECTOR_COUNT = 3;
+const SECTOR_LENGTH = LAP_LENGTH / SECTOR_COUNT;
 
 const state = {
   phase: "menu",
-  mode: "time",
+  mode: "sprint",
   rider: "blaze",
   difficulty: "pro",
+  conditions: "race",
   playerName: "WGP RIDER",
-  courseLength: 3000,
+  lapLength: LAP_LENGTH,
+  totalLaps: 3,
+  currentLap: 1,
+  lapStartTime: 0,
+  lapTimes: [],
+  bestLap: 0,
+  sector: 1,
+  sectorStartTime: 0,
+  sectorTimes: [],
+  penaltyTime: 0,
+  penalties: 0,
+  missedCheckpoints: 0,
+  courseLength: LAP_LENGTH * 3,
   distance: 0,
   elapsed: 0,
   speed: 0,
@@ -196,6 +308,9 @@ let player;
 let water;
 let oceanUniforms;
 let sun;
+let hemisphereLight;
+let skyMaterial;
+let sunSprite;
 let trackRoot;
 let wakeRoot;
 let rivalRoot;
@@ -219,6 +334,10 @@ let positionFxTimer = 0;
 let menuTime = 0;
 let audioEngine;
 let radarDots = [];
+let mapDots = [];
+let mapTrackLength = 0;
+let bannerTimer;
+let finishTimer;
 
 function supportsWebGL() {
   try {
@@ -245,11 +364,16 @@ function hash(value) {
   return Math.abs(Math.sin(value * 12.9898 + state.raceSeed * 0.731) * 43758.5453) % 1;
 }
 
+function wrappedLapDistance(distance) {
+  return ((distance % LAP_LENGTH) + LAP_LENGTH) % LAP_LENGTH;
+}
+
 function courseCenter(distance) {
-  const d = Math.max(0, distance);
-  return Math.sin(d / 104) * 3.55
-    + Math.sin(d / 247 + .82) * 2.25
-    + Math.sin(d / 49 + .3) * .72;
+  const phase = wrappedLapDistance(distance) / LAP_LENGTH * Math.PI * 2;
+  return Math.sin(phase) * 4.85
+    + Math.sin(phase * 2 + .68) * 2.35
+    + Math.sin(phase * 3 - .42) * .86
+    + Math.sin(phase * 5 + .2) * .28;
 }
 
 function courseHeading(distance) {
@@ -269,11 +393,12 @@ function racingLine(distance, skill = 1) {
 }
 
 function waterSample(x, distance, time = state.elapsed) {
+  const chopScale = conditionPresets[state.conditions]?.chop || 1;
   const longWave = Math.sin(distance * .071 - time * 2.05 + x * .055) * .105;
   const crossWave = Math.sin(distance * .127 + time * 2.75 - x * .21) * .052;
   const chop = Math.sin(distance * .31 - time * 4.1 + x * .43) * .024;
   const swell = Math.sin(distance * .024 + time * .72) * .07;
-  return longWave + crossWave + chop + swell;
+  return (longWave + crossWave + chop + swell) * chopScale;
 }
 
 function waterSlope(x, distance) {
@@ -416,9 +541,23 @@ function playImpact(intensity = 1) {
   oscillator.stop(context.currentTime + .26);
 }
 
+function playSignal(frequency = 620, duration = .12, volume = .075) {
+  if (!audioEngine || state.muted) return;
+  const { context, master } = audioEngine;
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+  oscillator.type = "square";
+  oscillator.frequency.setValueAtTime(frequency, context.currentTime);
+  gain.gain.setValueAtTime(volume, context.currentTime);
+  gain.gain.exponentialRampToValueAtTime(.0001, context.currentTime + duration);
+  oscillator.connect(gain).connect(master);
+  oscillator.start();
+  oscillator.stop(context.currentTime + duration + .02);
+}
+
 function makeSky() {
   const geometry = new THREE.SphereGeometry(600, 24, 16);
-  const material = new THREE.ShaderMaterial({
+  skyMaterial = new THREE.ShaderMaterial({
     side: THREE.BackSide,
     uniforms: {
       topColor: { value: new THREE.Color("#087ec4") },
@@ -446,7 +585,7 @@ function makeSky() {
       }
     `,
   });
-  scene.add(new THREE.Mesh(geometry, material));
+  scene.add(new THREE.Mesh(geometry, skyMaterial));
 
   const sunCanvas = document.createElement("canvas");
   sunCanvas.width = sunCanvas.height = 128;
@@ -458,15 +597,15 @@ function makeSky() {
   gradient.addColorStop(1, "rgba(255,150,30,0)");
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, 128, 128);
-  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+  sunSprite = new THREE.Sprite(new THREE.SpriteMaterial({
     map: new THREE.CanvasTexture(sunCanvas),
     transparent: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
   }));
-  sprite.position.set(-80, 62, -220);
-  sprite.scale.set(55, 55, 1);
-  scene.add(sprite);
+  sunSprite.position.set(-80, 62, -220);
+  sunSprite.scale.set(55, 55, 1);
+  scene.add(sunSprite);
 
   const cloudCanvas = document.createElement("canvas");
   cloudCanvas.width = 256;
@@ -493,6 +632,7 @@ function makeSky() {
     const size = 35 + Math.random() * 85;
     cloud.scale.set(size * 2.2, size, 1);
     cloud.userData.drift = .12 + Math.random() * .28;
+    cloud.userData.baseOpacity = cloud.material.opacity;
     cloudRoot.add(cloud);
   }
   scene.add(cloudRoot);
@@ -503,6 +643,7 @@ function makeOcean() {
   const geometry = new THREE.PlaneGeometry(900, 1100, segments, segments);
   oceanUniforms = {
     uTime: { value: 0 },
+    uWaveScale: { value: 1 },
     uDeep: { value: new THREE.Color("#012f48") },
     uShallow: { value: new THREE.Color("#0d8ea5") },
     uSun: { value: new THREE.Color("#fff0b8") },
@@ -512,6 +653,7 @@ function makeOcean() {
     side: THREE.DoubleSide,
     vertexShader: `
       uniform float uTime;
+      uniform float uWaveScale;
       varying float vWave;
       varying float vSlope;
       varying vec3 vWorld;
@@ -526,9 +668,9 @@ function makeOcean() {
         float b = sin(phaseB) * .29;
         float c = sin(phaseC) * .07;
         float d = sin(phaseD) * .026;
-        p.z += a + b + c + d;
-        float dx = cos(phaseA) * .019 + cos(phaseB) * .00522 + cos(phaseC) * .0112 - cos(phaseD) * .00806;
-        float dy = cos(phaseB) * .01508 + cos(phaseC) * .0112 + cos(phaseD) * .00598;
+        p.z += (a + b + c + d) * uWaveScale;
+        float dx = (cos(phaseA) * .019 + cos(phaseB) * .00522 + cos(phaseC) * .0112 - cos(phaseD) * .00806) * uWaveScale;
+        float dy = (cos(phaseB) * .01508 + cos(phaseC) * .0112 + cos(phaseD) * .00598) * uWaveScale;
         vec3 localNormal = normalize(vec3(-dx, -dy, 1.0));
         vWave = p.z;
         vSlope = length(vec2(dx, dy));
@@ -582,6 +724,51 @@ function makeOcean() {
   water.position.set(0, -.45, -280);
   water.receiveShadow = true;
   scene.add(water);
+}
+
+function applyConditions() {
+  if (!scene || !renderer) return;
+  const preset = conditionPresets[state.conditions] || conditionPresets.race;
+  if (skyMaterial) {
+    skyMaterial.uniforms.topColor.value.set(preset.top);
+    skyMaterial.uniforms.horizonColor.value.set(preset.horizon);
+    skyMaterial.uniforms.bottomColor.value.set(preset.bottom);
+  }
+  if (oceanUniforms) {
+    oceanUniforms.uDeep.value.set(preset.deep);
+    oceanUniforms.uShallow.value.set(preset.shallow);
+    oceanUniforms.uSun.value.set(preset.sun);
+    oceanUniforms.uWaveScale.value = preset.chop;
+  }
+  if (scene.fog) {
+    scene.fog.color.set(preset.fog);
+    scene.fog.density = (state.highQuality ? .0042 : .0055) * preset.fogDensity;
+  }
+  if (sun) {
+    sun.color.set(preset.light);
+    sun.intensity = preset.lightIntensity;
+    sun.position.set(
+      state.conditions === "golden" ? -48 : -34,
+      state.conditions === "golden" ? 34 : 55,
+      state.conditions === "storm" ? 6 : 22,
+    );
+  }
+  if (hemisphereLight) {
+    hemisphereLight.color.set(state.conditions === "storm" ? "#a9c7d1" : "#d8f4ff");
+    hemisphereLight.groundColor.set(state.conditions === "storm" ? "#102936" : "#0a3140");
+    hemisphereLight.intensity = state.conditions === "storm" ? 1.65 : 2.35;
+  }
+  if (sunSprite) {
+    sunSprite.material.opacity = state.conditions === "storm" ? .18 : state.conditions === "golden" ? .88 : 1;
+    sunSprite.position.y = state.conditions === "golden" ? 34 : 62;
+  }
+  if (cloudRoot) {
+    cloudRoot.children.forEach((cloud) => {
+      cloud.material.opacity = clamp((cloud.userData.baseOpacity || cloud.material.opacity) * preset.cloud, .1, .72);
+    });
+  }
+  renderer.toneMappingExposure = preset.exposure;
+  renderer.setClearColor(preset.horizon);
 }
 
 function hullGeometry() {
@@ -938,10 +1125,14 @@ function createBuoy(color = "#ff5b21", scale = 1) {
   return group;
 }
 
-function createGate() {
+function createGate(label = "WGP#1  BOOST", color = "#57e8ff") {
   const group = new THREE.Group();
   const gateMat = new THREE.MeshStandardMaterial({
-    color: "#57e8ff", emissive: "#0a92ae", emissiveIntensity: 1.8, roughness: .18, metalness: .65,
+    color,
+    emissive: color,
+    emissiveIntensity: 1.15,
+    roughness: .18,
+    metalness: .65,
   });
   [-2.15, 2.15].forEach((x) => {
     const post = mesh(new THREE.CylinderGeometry(.13, .18, 3.2, 10), gateMat);
@@ -960,7 +1151,7 @@ function createGate() {
   ctx.fillStyle = "#fff";
   ctx.font = "900 italic 46px Arial";
   ctx.textAlign = "center";
-  ctx.fillText("WGP#1  BOOST", 256, 64);
+  ctx.fillText(label, 256, 64);
   const sign = mesh(new THREE.PlaneGeometry(4.1, .77), new THREE.MeshBasicMaterial({
     map: new THREE.CanvasTexture(signCanvas), transparent: true, side: THREE.DoubleSide,
   }), false, false);
@@ -987,7 +1178,10 @@ function createRamp() {
 function createTrackObject(type, lane, courseDistance, options = {}) {
   const object = new THREE.Group();
   let visual;
-  if (type === "gate") visual = createGate();
+  if (type === "gate") visual = createGate("WGP#1  BOOST", "#57e8ff");
+  if (type === "checkpoint") {
+    visual = createGate(`SECTOR ${Number(options.checkpointIndex) + 1}`, "#ff7a3d");
+  }
   if (type === "buoy") {
     visual = createBuoy(hash(courseDistance) > .5 ? "#ff5b21" : "#ffe144", .88);
   }
@@ -1004,6 +1198,8 @@ function createTrackObject(type, lane, courseDistance, options = {}) {
     courseDistance,
     side: options.side || 0,
     collidable: type !== "marker",
+    checkpointIndex: options.checkpointIndex ?? -1,
+    width: options.width || 2.1,
   };
   trackRoot.add(object);
   trackObjects.push(object);
@@ -1013,23 +1209,42 @@ function createTrackObject(type, lane, courseDistance, options = {}) {
 function createCourse() {
   trackObjects.forEach((item) => trackRoot.remove(item));
   trackObjects = [];
-  const spacing = state.mode === "precision" ? 28 : state.mode === "sprint" ? 42 : 36;
-  const visibleSpan = state.highQuality ? 880 : 610;
-  const count = Math.ceil(visibleSpan / spacing);
-  const lanes = [-4.9, 0, 4.9];
-  for (let i = 0; i < count; i += 1) {
-    const distance = 42 + i * spacing;
-    const lane = lanes[(i * 7 + 1) % 3];
-    let type = i % 6 === 1 ? "gate" : i % 10 === 6 ? "ramp" : "buoy";
-    if (state.mode === "sprint" && i % 5 === 1) type = "gate";
-    createTrackObject(type, lane, distance);
-    if (type === "buoy" && i % 2 === 0) {
-      createTrackObject("buoy", -lane || 4.9, distance + 5.5);
+  const mode = config[state.mode];
+  const checkpointDistances = [SECTOR_LENGTH, SECTOR_LENGTH * 2, LAP_LENGTH - 20];
+  checkpointDistances.forEach((distance, checkpointIndex) => {
+    createTrackObject(
+      "checkpoint",
+      racingLine(distance, .55),
+      distance,
+      { checkpointIndex, width: mode.checkpointWidth },
+    );
+  });
+
+  const buoyLayout = [
+    [70, -4.9], [102, 4.5], [148, -2.6], [190, 5.1],
+    [244, -4.6], [352, 4.9], [396, -4.1], [448, 2.8],
+    [510, -5.2], [565, 4.5], [655, -4.8], [704, 4.9],
+    [762, -2.7], [820, 5.2], [868, -4.4],
+  ];
+  buoyLayout.forEach(([distance, lane], index) => {
+    createTrackObject("buoy", lane, distance);
+    if (state.mode === "precision" && index % 3 === 1) {
+      createTrackObject("buoy", -lane * .72, distance + 5.5);
     }
+  });
+
+  if (mode.ramps) {
+    [165, 474, 742].forEach((distance, index) => {
+      createTrackObject(index === 1 ? "gate" : "ramp", index === 1 ? 0 : (index ? 2.4 : -2.4), distance);
+    });
+  } else {
+    [176, 482, 748].forEach((distance) => {
+      createTrackObject("gate", racingLine(distance, .4), distance);
+    });
   }
 
-  const markerSpacing = state.highQuality ? 42 : 56;
-  for (let distance = 24; distance < visibleSpan; distance += markerSpacing) {
+  const markerSpacing = state.highQuality ? 38 : 52;
+  for (let distance = 18; distance < LAP_LENGTH; distance += markerSpacing) {
     createTrackObject("marker", -(TRACK_HALF_WIDTH + 1.35), distance, { side: -1 });
     createTrackObject("marker", TRACK_HALF_WIDTH + 1.35, distance + markerSpacing * .5, { side: 1 });
   }
@@ -1418,10 +1633,10 @@ function buildPlayer() {
 function createRivals() {
   rivals.forEach((item) => rivalRoot.remove(item.group));
   rivals = [];
-  const laneStarts = [-3.9, 1.35, 4.25, -1.35, 3.1];
+  const laneStarts = [-5.15, -3.35, -1.6, 1.65, 3.4, 5.15, .15];
   // A real closed-course start is nearly abreast. Tiny offsets keep the
   // silhouettes readable without handing every rival an artificial head start.
-  const gridOffsets = [1.6, .8, 0, -.8, -1.6];
+  const gridOffsets = [1.2, .8, .4, -.4, -.8, -1.2, -1.6];
   rivalProfiles.forEach((profile, index) => {
     const group = createJetSki(
       profile.primary,
@@ -1456,6 +1671,7 @@ function createRivals() {
       mistakeOffset: 0,
       paceNoise: .985 + hash(index + 12) * .03,
       behavior: "racing",
+      focus: .988 + hash(index + 73) * .024,
       wakePenalty: 0,
       obstacleCooldown: 0,
       obstacleHits: 0,
@@ -1495,8 +1711,8 @@ function initialize3D() {
   makeSky();
   makeOcean();
 
-  const hemi = new THREE.HemisphereLight("#d8f4ff", "#0a3140", 2.35);
-  scene.add(hemi);
+  hemisphereLight = new THREE.HemisphereLight("#d8f4ff", "#0a3140", 2.35);
+  scene.add(hemisphereLight);
   sun = new THREE.DirectionalLight("#fff2c6", 3.5);
   sun.position.set(-34, 55, 22);
   sun.castShadow = state.highQuality;
@@ -1549,19 +1765,42 @@ function initialize3D() {
   createCourse();
   createRivals();
   radarDots = [];
+  mapDots = [];
   ui.radar.replaceChildren();
+  ui.mapRivals.replaceChildren();
   rivalProfiles.forEach((profile) => {
     const dot = document.createElement("i");
     dot.style.setProperty("--radar-color", profile.primary);
     ui.radar.append(dot);
     radarDots.push(dot);
+    const mapDot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    mapDot.setAttribute("r", "2.6");
+    mapDot.setAttribute("class", "map-rival");
+    mapDot.style.setProperty("--map-color", profile.primary);
+    ui.mapRivals.append(mapDot);
+    mapDots.push(mapDot);
   });
+  mapTrackLength = ui.mapTrack?.getTotalLength?.() || 0;
+  applyConditions();
   renderer.setAnimationLoop(render);
 }
 
 function resetRace() {
+  clearTimeout(finishTimer);
+  clearTimeout(bannerTimer);
+  state.courseLength = state.lapLength * state.totalLaps;
   state.distance = 0;
   state.elapsed = 0;
+  state.currentLap = 1;
+  state.lapStartTime = 0;
+  state.lapTimes = [];
+  state.bestLap = 0;
+  state.sector = 1;
+  state.sectorStartTime = 0;
+  state.sectorTimes = [];
+  state.penaltyTime = 0;
+  state.penalties = 0;
+  state.missedCheckpoints = 0;
   state.speed = 0;
   state.topSpeed = 0;
   state.nitro = 70;
@@ -1578,13 +1817,18 @@ function resetRace() {
   state.slipstream = 0;
   state.curve = 0;
   state.surfaceChop = 0;
-  state.raceSeed = 108 + state.courseLength * .01 + ["time", "sprint", "precision"].indexOf(state.mode) * 37;
+  state.raceSeed = 108
+    + state.totalLaps * 17
+    + ["time", "sprint", "precision"].indexOf(state.mode) * 37
+    + ["race", "golden", "storm"].indexOf(state.conditions) * 11;
   state.score = 0;
   state.gates = 0;
-  state.totalGates = 0;
+  state.totalGates = SECTOR_COUNT * state.totalLaps;
   state.collisions = 0;
   state.position = 1;
   state.previousPosition = 1;
+  state.finalPosition = null;
+  state.finalOrder = null;
   state.shake = 0;
   state.impact = 0;
   state.splash = 0;
@@ -1599,11 +1843,17 @@ function resetRace() {
   if (sceneryRoot) sceneryRoot.position.z = 0;
   ui.positionPanel.classList.remove("position-gained", "position-lost");
   ui.cinematicFx.classList.remove("splash");
+  ui.raceIntro.classList.add("hidden");
+  ui.raceBanner.classList.add("hidden");
   document.documentElement.style.setProperty("--boost", "0");
   document.documentElement.style.setProperty("--impact", "0");
   if (ui.grip) ui.grip.textContent = "100%";
   if (ui.gForce) ui.gForce.textContent = "0.0 G";
   if (ui.surface) ui.surface.textContent = "CALM";
+  if (ui.currentLap) ui.currentLap.textContent = "1";
+  if (ui.totalLaps) ui.totalLaps.textContent = state.totalLaps;
+  if (ui.sectorLabel) ui.sectorLabel.textContent = "S1";
+  applyConditions();
 }
 
 function showCallout(message, color = "#fff") {
@@ -1613,11 +1863,120 @@ function showCallout(message, color = "#fff") {
   calloutTimer = 1.15;
 }
 
+function showRaceBanner(title, kicker = "RACE CONTROL", duration = 1300) {
+  clearTimeout(bannerTimer);
+  ui.raceBannerTitle.textContent = title;
+  ui.raceBannerKicker.textContent = kicker;
+  ui.raceBanner.classList.remove("hidden");
+  bannerTimer = setTimeout(() => ui.raceBanner.classList.add("hidden"), duration);
+}
+
 function formatTime(seconds) {
   const minutes = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   const ms = Math.floor((seconds % 1) * 1000);
   return `${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}.${String(ms).padStart(3, "0")}`;
+}
+
+function recordLap(isFinish = false) {
+  if (state.lapTimes.length >= state.totalLaps) return;
+  const finalSectorTime = Math.max(0, state.elapsed - state.sectorStartTime);
+  if (finalSectorTime > 0) state.sectorTimes.push(finalSectorTime);
+  const lapTime = Math.max(0, state.elapsed - state.lapStartTime);
+  state.lapTimes.push(lapTime);
+  state.bestLap = state.bestLap ? Math.min(state.bestLap, lapTime) : lapTime;
+  state.lapStartTime = state.elapsed;
+  state.sectorStartTime = state.elapsed;
+  state.sector = 1;
+  if (!isFinish) {
+    state.currentLap = Math.min(state.totalLaps, state.currentLap + 1);
+    if (state.currentLap === state.totalLaps) {
+      showRaceBanner("FINAL LAP", `LAP ${state.currentLap} / ${state.totalLaps}`, 1700);
+      playSignal(920, .22, .09);
+    } else {
+      showRaceBanner(`LAP ${state.currentLap}`, `LAST LAP ${formatTime(lapTime)}`);
+      playSignal(760, .14, .07);
+    }
+  }
+}
+
+function updateRaceTiming(previousDistance) {
+  const previousLapIndex = Math.floor(previousDistance / LAP_LENGTH);
+  const lapIndex = Math.floor(state.distance / LAP_LENGTH);
+  if (lapIndex > previousLapIndex && state.distance < state.courseLength) {
+    recordLap(false);
+    return;
+  }
+  const nextSector = Math.min(
+    SECTOR_COUNT,
+    Math.floor(wrappedLapDistance(state.distance) / SECTOR_LENGTH) + 1,
+  );
+  if (nextSector > state.sector) {
+    const sectorTime = Math.max(0, state.elapsed - state.sectorStartTime);
+    state.sectorTimes.push(sectorTime);
+    state.sectorStartTime = state.elapsed;
+    state.sector = nextSector;
+    showCallout(`SECTOR ${nextSector - 1} · ${formatTime(sectorTime)}`, "#8feeff");
+  }
+}
+
+function setMapPosition(marker, progress) {
+  if (!marker || !ui.mapTrack || !mapTrackLength) return;
+  const ratio = wrappedLapDistance(progress) / LAP_LENGTH;
+  const point = ui.mapTrack.getPointAtLength(mapTrackLength * ratio);
+  marker.setAttribute("cx", point.x.toFixed(2));
+  marker.setAttribute("cy", point.y.toFixed(2));
+}
+
+function updateCircuitMap() {
+  setMapPosition(ui.mapPlayer, state.distance);
+  mapDots.forEach((dot, index) => {
+    if (rivals[index]) setMapPosition(dot, rivals[index].progress);
+  });
+}
+
+function populateStartingGrid() {
+  const profile = riderProfiles[state.rider];
+  const entries = rivalProfiles.map((rival, index) => ({
+    name: rival.name,
+    color: rival.primary,
+    archetype: rival.archetype,
+    order: index < 3 ? index : index + 1,
+    player: false,
+  }));
+  entries.push({
+    name: state.playerName,
+    color: profile.primary,
+    archetype: "PLAYER",
+    order: 3,
+    player: true,
+  });
+  const fragment = document.createDocumentFragment();
+  entries.sort((a, b) => a.order - b.order).forEach((entry, index) => {
+    const item = document.createElement("li");
+    if (entry.player) item.classList.add("player");
+    item.style.setProperty("--grid-color", entry.color);
+    const number = document.createElement("b");
+    number.textContent = String(index + 1).padStart(2, "0");
+    const dot = document.createElement("i");
+    const name = document.createElement("span");
+    name.textContent = entry.name;
+    const archetype = document.createElement("small");
+    archetype.textContent = entry.archetype;
+    item.append(number, dot, name, archetype);
+    fragment.append(item);
+  });
+  ui.startingGrid.replaceChildren(fragment);
+  ui.introConditions.textContent = `${conditionPresets[state.conditions].label} · ${state.totalLaps} LAPS`;
+  ui.introDifficulty.textContent = `${aiLevels[state.difficulty].label} AI`;
+}
+
+async function presentStartingGrid() {
+  populateStartingGrid();
+  ui.raceIntro.classList.remove("hidden");
+  await new Promise((resolve) => setTimeout(resolve, 1450));
+  ui.raceIntro.classList.add("hidden");
+  await new Promise((resolve) => setTimeout(resolve, 180));
 }
 
 function getStandings() {
@@ -1689,9 +2048,12 @@ function handlePositionChange(position) {
 function updateHud(dt) {
   ui.speed.textContent = Math.round(state.speed);
   ui.timer.textContent = formatTime(state.elapsed);
-  ui.distance.textContent = `${(state.distance / 1000).toFixed(2)} / ${(state.courseLength / 1000).toFixed(2)} KM`;
+  ui.currentLap.textContent = state.currentLap;
+  ui.totalLaps.textContent = state.totalLaps;
+  ui.sectorLabel.textContent = `S${state.sector}`;
+  ui.distance.textContent = `LAP ${state.currentLap}/${state.totalLaps} · SECTOR ${state.sector}`;
   ui.mode.textContent = config[state.mode].label;
-  ui.courseBar.style.width = `${clamp(state.distance / state.courseLength * 100, 0, 100)}%`;
+  ui.courseBar.style.width = `${clamp(wrappedLapDistance(state.distance) / LAP_LENGTH * 100, 0, 100)}%`;
   ui.nitroBar.style.width = `${state.nitro}%`;
   ui.nitroValue.textContent = `${Math.round(state.nitro)}%`;
   ui.grip.textContent = `${Math.round(state.grip * 100)}%`;
@@ -1701,6 +2063,7 @@ function updateHud(dt) {
     : state.surfaceChop > .42
       ? "CHOP"
       : "CALM";
+  updateCircuitMap();
 
   const turn = courseTurn(state.distance + 42);
   const turnStrength = Math.abs(turn);
@@ -1741,7 +2104,7 @@ function updateHud(dt) {
 }
 
 function updateTrack() {
-  const recycleMetres = state.highQuality ? 880 : 610;
+  const recycleMetres = LAP_LENGTH;
   const currentCenter = courseCenter(state.distance);
   trackObjects.forEach((object) => {
     while (object.userData.courseDistance < state.distance - 34) {
@@ -1767,15 +2130,31 @@ function updateTrack() {
     const near = object.position.z > -.65 && object.position.z < 2.1;
     if (!near || object.userData.hit) return;
     object.userData.hit = true;
-    if (object.userData.type === "gate") {
-      state.totalGates += 1;
-      if (dx < 2.1) {
+    if (object.userData.type === "checkpoint") {
+      if (dx < object.userData.width) {
         state.gates += 1;
-        state.nitro = clamp(state.nitro + 22, 0, 100);
+        state.nitro = clamp(state.nitro + (state.mode === "time" ? 13 : 7), 0, 100);
         state.score += state.mode === "precision" ? 800 : 500;
-        showCallout(state.mode === "precision" ? "PRECISION GATE +800" : "BOOST GATE +500", "#79efff");
+        showCallout(`SECTOR ${object.userData.checkpointIndex + 1} CLEAR`, "#7dffbd");
       } else {
-        showCallout("GATE MISSED", "#ffba64");
+        const penalty = config[state.mode].penalty;
+        state.missedCheckpoints += 1;
+        if (penalty > 0) {
+          state.penalties += 1;
+          state.penaltyTime += penalty;
+          showCallout(`CHECKPOINT MISSED · +${penalty} SEC`, "#ff9a64");
+        } else {
+          showCallout("CHECKPOINT MISSED", "#ffba64");
+        }
+      }
+    }
+    if (object.userData.type === "gate") {
+      if (dx < object.userData.width) {
+        state.nitro = clamp(state.nitro + 20, 0, 100);
+        state.score += 350;
+        showCallout("BOOST GATE · NITRO +20", "#79efff");
+      } else if (state.mode === "time") {
+        showCallout("BOOST GATE MISSED", "#ffba64");
       }
     }
     if (object.userData.type === "buoy" && dx < .95) {
@@ -1810,7 +2189,7 @@ function updateRivals(dt) {
 
   rivals.forEach((rival, index) => {
     const { profile } = rival;
-    const gapToPlayer = state.distance - rival.progress;
+    const finalLap = rival.progress >= state.courseLength - LAP_LENGTH;
     const turnAhead = courseTurn(rival.progress + 34);
     const cornerSeverity = Math.abs(turnAhead);
     const ideal = racingLine(rival.progress, profile.cornering);
@@ -1862,7 +2241,7 @@ function updateRivals(dt) {
           : -preferredSide;
         target = ahead.lineX + attackSide * (2.05 + profile.aggression * .55);
         rival.behavior = "attacking";
-      } else if (behind?.player && behind.gap < 9 && profile.defense > .92) {
+      } else if (behind && behind.gap < 9 && profile.defense > .92) {
         target = lerp(target, behind.lineX, .42 * profile.defense);
         rival.behavior = "defending";
       }
@@ -1890,7 +2269,7 @@ function updateRivals(dt) {
     rival.boostLeft = Math.max(0, (rival.boostLeft || 0) - dt);
     if (
       rival.boostTimer <= 0
-      && rival.nitro > 22
+      && rival.nitro > (profile.archetype === "COMEBACK" && finalLap ? 14 : 22)
       && state.elapsed > 1.5
       && cornerSeverity < .38
       && (!ahead || ahead.gap < 24 || rival.progress < state.distance)
@@ -1901,16 +2280,24 @@ function updateRivals(dt) {
       rival.boostTimer = 3.5 + hash(index * 4 + state.elapsed) * (4.9 - profile.aggression);
     }
     rival.boosting = rival.boostLeft > 0;
-    const racePace = mode.cruise * level.pace * profile.skill * rival.paceNoise;
+    const comebackPace = profile.archetype === "COMEBACK" && finalLap ? 1.008 : 1;
+    const racePace = mode.cruise
+      * level.pace
+      * profile.skill
+      * rival.paceNoise
+      * rival.focus
+      * comebackPace;
     const physicalTop = mode.max * (1 + (profile.skill - 1) * .35);
-    const cornerLoss = cornerSeverity * (17.5 / (profile.cornering * level.consistency));
+    const brakingStyle = profile.archetype === "LATE BRAKER" ? .93 : 1;
+    const cornerLoss = cornerSeverity
+      * (17.5 / (profile.cornering * level.consistency))
+      * brakingStyle;
     const lineError = Math.abs(rival.lineX - ideal);
     const linePenalty = clamp(lineError * 1.45, 0, 7.2);
     const draft = ahead && ahead.gap > 5 && ahead.gap < 19 && Math.abs(ahead.lineX - rival.lineX) < 1.35
       ? 3.1 + level.reaction * 1.2
       : 0;
     const boostPace = rival.boosting ? 15.5 * profile.boost : 0;
-    const fairFieldCompression = clamp(gapToPlayer / 420, -.018, .018) * racePace;
     const launchLimit = lerp(
       72,
       physicalTop,
@@ -1920,7 +2307,7 @@ function updateRivals(dt) {
     rival.targetSpeed = clamp(
       Math.min(
         launchLimit,
-        cornerLimit + boostPace + draft + fairFieldCompression,
+        cornerLimit + boostPace + draft,
       ),
       62,
       physicalTop,
@@ -1932,7 +2319,14 @@ function updateRivals(dt) {
     );
     if (rival.boosting) rival.nitro = Math.max(0, rival.nitro - dt * 23);
     else rival.nitro = Math.min(100, rival.nitro + dt * 1.9);
+    const previousRivalProgress = rival.progress;
     rival.progress += rival.speed / 3.6 * dt;
+    if (
+      Math.floor(previousRivalProgress / SECTOR_LENGTH)
+      < Math.floor(rival.progress / SECTOR_LENGTH)
+    ) {
+      rival.nitro = Math.min(100, rival.nitro + (state.mode === "time" ? 13 : 7));
+    }
 
     const lateralAcceleration = (rival.targetLine - rival.lineX)
       * (2.25 + level.reaction * .82)
@@ -2110,7 +2504,7 @@ function updatePlayer(dt) {
   );
 
   const requestedGrip = clamp(
-    profile.stability
+    profile.stability * mode.handlingAssist
       - Math.abs(state.steer) * speedRatio * .17
       - state.surfaceChop * .13
       - Math.abs(state.vx) * .015,
@@ -2125,6 +2519,7 @@ function updatePlayer(dt) {
   const steeringForce = state.steer
     * (6.8 + speedRatio * 11.8)
     * profile.handling
+    * mode.handlingAssist
     * (.38 + state.grip * .62);
   const centrifugalForce = -state.curve * speedRatio * speedRatio * 8.4;
   state.vx += (steeringForce + centrifugalForce) * dt;
@@ -2182,8 +2577,10 @@ function updatePlayer(dt) {
   if (boosting) state.nitro = Math.max(0, state.nitro - dt * (18 / profile.boost));
   else state.nitro = Math.min(100, state.nitro + dt * (1.72 + state.slipstream * .5));
   state.topSpeed = Math.max(state.topSpeed, state.speed);
+  const previousDistance = state.distance;
   state.distance += state.speed / 3.6 * dt;
   state.elapsed += dt;
+  updateRaceTiming(previousDistance);
 
   const waveHeight = .17 + waterSample(state.x, state.distance) * .92;
   const slope = waterSlope(state.x, state.distance);
@@ -2324,24 +2721,62 @@ function updateCamera(dt, boosting) {
   }
 }
 
+function renderPodium(order) {
+  const fragment = document.createDocumentFragment();
+  order.slice(0, 3).forEach((entry, index) => {
+    const item = document.createElement("li");
+    item.style.setProperty("--podium-color", entry.color);
+    const rank = document.createElement("b");
+    rank.textContent = `P${index + 1}`;
+    const name = document.createElement("span");
+    name.textContent = entry.name;
+    const detail = document.createElement("small");
+    detail.textContent = entry.player ? "YOU" : entry.rival?.profile.archetype || "RIDER";
+    item.append(rank, name, detail);
+    fragment.append(item);
+  });
+  ui.podium.replaceChildren(fragment);
+}
+
 function finishRace() {
-  state.phase = "result";
-  ui.hud.classList.add("hidden");
-  ui.touch.classList.add("hidden");
-  ui.result.classList.remove("hidden");
-  ui.finalTime.textContent = formatTime(state.elapsed);
-  ui.topSpeed.textContent = Math.round(state.topSpeed);
-  ui.gateScore.textContent = `${state.gates} / ${state.totalGates}`;
-  const order = getStandings();
+  if (state.phase !== "racing") return;
+  recordLap(true);
+  state.phase = "finishing";
+  state.keys = { left: false, right: false, brake: false, nitro: false };
+  const penaltyDistance = state.penaltyTime * Math.max(26, state.speed / 3.6);
+  const order = getStandings()
+    .map((entry) => ({
+      ...entry,
+      officialProgress: entry.progress - (entry.player ? penaltyDistance : 0),
+    }))
+    .sort((a, b) => b.officialProgress - a.officialProgress);
   const finalPosition = order.findIndex((entry) => entry.player) + 1;
+  state.finalPosition = finalPosition;
+  state.finalOrder = order;
+
+  ui.finalTime.textContent = formatTime(state.elapsed + state.penaltyTime);
+  ui.topSpeed.textContent = Math.round(state.topSpeed);
+  ui.bestLap.textContent = state.bestLap ? formatTime(state.bestLap) : "--:--.---";
+  ui.penaltyTime.textContent = `+${state.penaltyTime.toFixed(3)} S`;
+  ui.penaltyTime.style.color = state.penaltyTime > 0 ? "#ff9a64" : "#7dffbd";
+  ui.gateScore.textContent = `${state.gates} / ${state.totalGates}`;
   ui.finalPosition.textContent = `${finalPosition} / ${order.length}`;
   $("#resultTitle").innerHTML = finalPosition <= 3
-    ? `PODIUM<br>SECURED.`
-    : `RACE<br>COMPLETE.`;
-  state.speed = 0;
-  state.throttleLoad = 0;
+    ? "PODIUM<br>SECURED."
+    : "RACE<br>COMPLETE.";
+  renderPodium(order);
+  showRaceBanner("CHEQUERED FLAG", `OFFICIAL P${finalPosition}`, 1050);
+  playSignal(1040, .32, .1);
   document.documentElement.style.setProperty("--boost", "0");
-  updateAudio();
+  finishTimer = setTimeout(() => {
+    state.phase = "result";
+    ui.hud.classList.add("hidden");
+    ui.touch.classList.add("hidden");
+    ui.result.classList.remove("hidden");
+    state.speed = 0;
+    state.throttleLoad = 0;
+    updateAudio();
+  }, 1050);
 }
 
 function render() {
@@ -2419,6 +2854,7 @@ async function countdown() {
   for (const label of ["3", "2", "1", "GO!"]) {
     ui.countdown.textContent = label;
     ui.countdown.style.color = label === "GO!" ? "#ff5b21" : "#fff";
+    playSignal(label === "GO!" ? 980 : 560, label === "GO!" ? .22 : .1, label === "GO!" ? .095 : .06);
     await new Promise((resolve) => setTimeout(resolve, label === "GO!" ? 550 : 680));
   }
   ui.countdown.classList.add("hidden");
@@ -2426,15 +2862,22 @@ async function countdown() {
 
 async function startRace() {
   state.phase = "loading";
+  ui.result.classList.add("hidden");
+  ui.pauseScreen.classList.add("hidden");
+  ui.hud.classList.add("hidden");
+  ui.touch.classList.add("hidden");
   resetRace();
   initializeAudio();
   if (!renderer) initialize3D();
   await fakeLoad();
+  state.phase = "intro";
+  await presentStartingGrid();
   ui.hud.classList.remove("hidden");
   if (isTouch) ui.touch.classList.remove("hidden");
   state.phase = "countdown";
   await countdown();
   state.phase = "racing";
+  showRaceBanner("HOLESHOT", `${state.totalLaps} LAPS · 8 RIDERS`, 1100);
   clock.getDelta();
 }
 
@@ -2453,12 +2896,16 @@ function setPaused(value) {
 }
 
 function backToMenu() {
+  clearTimeout(finishTimer);
+  clearTimeout(bannerTimer);
   state.phase = "menu";
   state.paused = false;
   ui.pauseScreen.classList.add("hidden");
   ui.result.classList.add("hidden");
   ui.hud.classList.add("hidden");
   ui.touch.classList.add("hidden");
+  ui.raceIntro.classList.add("hidden");
+  ui.raceBanner.classList.add("hidden");
   ui.start.classList.remove("hidden");
   document.documentElement.style.setProperty("--boost", "0");
   document.documentElement.style.setProperty("--impact", "0");
@@ -2530,8 +2977,9 @@ ui.setup.addEventListener("submit", (event) => {
   state.mode = form.get("mode");
   state.rider = form.get("rider");
   state.difficulty = $("#difficulty").value;
+  state.conditions = $("#conditions").value;
   state.playerName = $("#playerName").value.trim().toUpperCase() || riderProfiles[state.rider].name;
-  state.courseLength = Number(form.get("distance"));
+  state.totalLaps = Number(form.get("laps"));
   startRace();
 });
 $$("[data-control]").forEach(bindControl);
@@ -2573,7 +3021,15 @@ window.__WGP_DEBUG__ = {
     phase: state.phase,
     mode: state.mode,
     difficulty: state.difficulty,
+    conditions: state.conditions,
     distance: state.distance,
+    lap: state.currentLap,
+    totalLaps: state.totalLaps,
+    sector: state.sector,
+    lapTimes: [...state.lapTimes],
+    bestLap: state.bestLap,
+    penaltyTime: state.penaltyTime,
+    checkpoints: `${state.gates}/${state.totalGates}`,
     elapsed: state.elapsed,
     speed: state.speed,
     position: state.position,
@@ -2583,6 +3039,7 @@ window.__WGP_DEBUG__ = {
     gForce: state.gForce,
     x: state.x,
     airborne: state.airborne,
+    finalPosition: state.finalPosition || null,
     rivals: rivals.map((rival) => ({
       name: rival.profile.name,
       progress: rival.progress,
@@ -2594,17 +3051,19 @@ window.__WGP_DEBUG__ = {
     })),
   }),
 };
-if (location.hostname === "wgp.local") {
+if (["wgp.local", "localhost", "127.0.0.1"].includes(location.hostname)) {
   window.__WGP_DEBUG__.resetScenario = ({
     mode = "sprint",
     difficulty = "pro",
     rider = "nova",
-    distance = 1000,
+    laps = 3,
+    conditions = "race",
   } = {}) => {
     state.mode = mode;
     state.difficulty = difficulty;
     state.rider = rider;
-    state.courseLength = distance;
+    state.totalLaps = laps;
+    state.conditions = conditions;
     resetRace();
     state.phase = "racing";
     return window.__WGP_DEBUG__.snapshot();
@@ -2650,10 +3109,9 @@ if (location.hostname === "wgp.local") {
       updatePlayer(dt);
       updateTrack();
       updateRivals(dt);
-      updateWake(dt);
-      updateHud(dt);
       if (state.distance >= state.courseLength) finishRace();
     }
+    updateHud(.1);
     return window.__WGP_DEBUG__.snapshot();
   };
 }
